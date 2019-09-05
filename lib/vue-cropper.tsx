@@ -1,22 +1,22 @@
 import { Component, Model, Prop, Watch, Vue, Emit } from 'vue-property-decorator'
 
+import { loadImg } from './common'
+
 import './style/index.scss'
 
 import { Layout } from './interface'
 
 @Component({
   data() {
-    return {
-    }
+    return {}
   },
 })
-
 export default class VueCropper extends Vue {
   // 高清屏的问题
   ratio = window.devicePixelRatio
 
   $refs!: {
-    canvas: HTMLCanvasElement,
+    canvas: HTMLCanvasElement
   }
 
   // 图片属性
@@ -54,15 +54,14 @@ export default class VueCropper extends Vue {
     return status
   }
 
-  // 检查图片
+  // 检查图片, 修改图片为正确角度
   async checkedImg(url: string) {
     let img: HTMLImageElement
     try {
-      img = await this.loadImg(url)
+      img = await loadImg(url)
       this.imgLoad('success')
     } catch (error) {
-      this.imgLoad(error)
-      console.log('img load error')
+      this.imgLoad('error')
       return false
     }
     console.log('img load success')
@@ -70,7 +69,7 @@ export default class VueCropper extends Vue {
     // CanvasRenderingContext2D
     const canvas: HTMLCanvasElement = this.$refs.canvas
     const ctx: any = canvas.getContext('2d')
-    let {width, height} = {... this.wrapper}
+    let { width, height } = { ...this.wrapper }
     canvas.style.width = `${width}px`
     canvas.style.height = `${height}px`
 
@@ -78,24 +77,14 @@ export default class VueCropper extends Vue {
     height = height * this.ratio
     canvas.width = width
     canvas.height = height
-    ctx.drawImage(img, 0, 0, width, width / img.width * img.height)
+    ctx.drawImage(img, 0, 0, width, (width / img.width) * img.height)
     return true
-  }
-
-  // 加载图片
-  async loadImg(url: string): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-      const img = new Image()
-      img.onload = () => resolve(img)
-      img.onerror = reject
-      img.src = url
-    })
   }
 
   render() {
     return (
       <section class="vue-cropper">
-        <canvas class="cropper-canvas" ref="canvas"></canvas>
+        <canvas class="cropper-canvas" ref="canvas" />
       </section>
     )
   }
