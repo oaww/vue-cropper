@@ -9,6 +9,8 @@
     ]
   },
   "rules": {
+    "trailing-comma": false,
+    "no-bitwise": false,
     "semicolon": [true, "never"],
     "member-access": [true, "no-public"],
     "quotemark": [true, "single", "jsx-double"],

@@ -31,14 +31,13 @@ export default class Home extends Vue {
 
   filter = grayscale
 
-  randomFilter () {
+  randomFilter() {
     const filters = [
-      grayscale, oldPhoto, blackAndWhite
+      grayscale,
+      oldPhoto,
+      blackAndWhite
     ]
     this.filter = filters[~~(Math.random() * filters.length)]
-  }
-
-  mounted():void {
   }
 }
 </script>

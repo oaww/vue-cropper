@@ -102,7 +102,9 @@ class Conversion {
   render(img: HTMLImageElement, canvas: HTMLCanvasElement, orientation: number) {
     this.ctx = canvas.getContext('2d')
     this.img = img
-    if (!this.ctx) return canvas
+    if (!this.ctx) {
+      return canvas
+    }
     if (this.handle[orientation]) {
       const curCanvas = this.handle[orientation](canvas)
       this.ctx = canvas.getContext('2d')

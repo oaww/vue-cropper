@@ -1,6 +1,6 @@
 import VueCropper from './vue-cropper'
 
-const install = function(Vue: any) {
+const install = (Vue: any) => {
   Vue.component('VueCropper', VueCropper)
 }
 

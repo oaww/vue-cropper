@@ -4,7 +4,9 @@
 const grayscale = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
   let gray: number = 0
   const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d')
-  if (!ctx) return canvas
+  if (!ctx) {
+    return canvas
+  }
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
   for (let i = 0; i < canvas.width * canvas.height * 4; i += 4) {
     const r: number = imgData.data[i]
@@ -23,8 +25,10 @@ const grayscale = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
 const blackAndWhite = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
   // 获取图片的像素点 rgba
   const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d')
-  if (!ctx) return canvas
-  let weiData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  if (!ctx) {
+    return canvas
+  }
+  const weiData = ctx.getImageData(0, 0, canvas.width, canvas.height)
   let gray: number = 0
   let i = 0
   while (i < canvas.width * canvas.height * 4) {
@@ -46,8 +50,10 @@ const blackAndWhite = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
 const oldPhoto = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
   // 获取图片的像素点 rgba
   const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d')
-  if (!ctx) return canvas
-  let weiData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  if (!ctx) {
+    return canvas
+  }
+  const weiData = ctx.getImageData(0, 0, canvas.width, canvas.height)
   let i = 0
   while (i < canvas.width * canvas.height * 4) {
     const r: number = weiData.data[i]

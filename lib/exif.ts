@@ -1,5 +1,4 @@
 const Exif: any = {}
-
 Exif.getData = (img: HTMLImageElement) =>
   new Promise((reslove, reject) => {
     let obj: any = {}
@@ -36,7 +35,7 @@ function getImageData(img: HTMLImageElement) {
           fileReader.readAsArrayBuffer(blob)
         })
       } else {
-        var http = new XMLHttpRequest()
+        var http: any = new XMLHttpRequest()
         http.onload = function() {
           if (this.status == 200 || this.status === 0) {
             data = http.response
@@ -155,5 +154,4 @@ function getOrientation(arrayBuffer: ArrayBuffer) {
   }
   return orientation
 }
-
 export default Exif

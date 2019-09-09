@@ -36,7 +36,7 @@ export default class VueCropper extends Vue {
 
   // 滤镜函数
   @Prop({ default: null })
-  readonly filter!: [Function, null]
+  readonly filter!: any
 
   @Prop({ default: 'png' })
   readonly outputType!: string
@@ -49,7 +49,7 @@ export default class VueCropper extends Vue {
   }
 
   @Watch('filter')
-  onFilterChanged(val: Function | null) {
+  onFilterChanged(val: any) {
     if (val) {
       this.checkedImg(this.img)
     }
