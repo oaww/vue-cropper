@@ -36,7 +36,7 @@ export default class VueCropper extends Vue {
 
   // 滤镜函数
   @Prop({ default: null })
-  readonly filter!: Function | null
+  readonly filter!: [Function, null]
 
   @Prop({ default: 'png' })
   readonly outputType!: string
