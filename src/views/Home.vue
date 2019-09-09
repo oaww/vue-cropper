@@ -1,29 +1,44 @@
 <template>
   <div class="home">
-    vue-cropper-next版本
     <vue-cropper
       :img="option.img"
       :wrapper="option.wrapper"
+      :filter="filter"
     ></vue-cropper>
+    <button @click="randomFilter">切换滤镜</button>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import vueCropper from '../../lib/index'
+import { VueCropper } from '../../lib/index'
+import { grayscale, oldPhoto, blackAndWhite } from '../../lib/filter'
 
 @Component({
   components: {
-    vueCropper,
+    VueCropper,
   },
 })
+
 export default class Home extends Vue {
-  option = {
-    img: 'http://cdn.xyxiao.cn/bg10.jpg',
+  option =  {
+    img: 'http://cdn.xyxiao.cn/Portrait_8.jpg',
     wrapper: {
-      width: 500,
-      height: 500,
+      width: '500px',
+      height: '500px',
     },
+  }
+
+  filter = grayscale
+
+  randomFilter () {
+    const filters = [
+      grayscale, oldPhoto, blackAndWhite
+    ]
+    this.filter = filters[~~(Math.random() * filters.length)]
+  }
+
+  mounted():void {
   }
 }
 </script>
