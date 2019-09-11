@@ -6,6 +6,7 @@
       :filter="filter"
     ></vue-cropper>
     <div class="control">
+      <button @click="randomImg">切换图片</button>
       <button @click="randomFilter">切换滤镜</button>
     </div>
   </div>
@@ -41,10 +42,17 @@ export default class Home extends Vue {
     const filters = [
       grayscale,
       oldPhoto,
-      blackAndWhite
+      blackAndWhite,
+      null
     ]
     this.filter = filters[~~(Math.random() * filters.length)] || null
   }
+
+  randomImg() {
+    const num = ~~(Math.random() * 9 + 1)
+    this.option.img = `http://cdn.xyxiao.cn/bg${num}.jpg`
+  }
+
 }
 </script>
 
@@ -61,5 +69,9 @@ export default class Home extends Vue {
     width: 100%;
     padding-top: 20px;
     text-align: center;
+
+    button {
+      margin-right: 20px;
+    }
   }
 </style>

@@ -7,6 +7,8 @@ declare global {
 export interface InterfaceLayout {
   width: string
   height: string
+  background: string
+  backgroundImage: string
 }
 
 export interface InterfaceImgload {
