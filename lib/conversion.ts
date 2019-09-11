@@ -40,7 +40,7 @@ class Conversion {
         if (canvas && this.ctx && this.img) {
           canvas.width = this.img.width
           canvas.height = this.img.height
-          //180 graus
+          // 180 graus
           this.ctx.translate(this.img.width / 2, this.img.height / 2)
           this.ctx.rotate((180 * Math.PI) / 180)
           this.ctx.translate(-this.img.width / 2, -this.img.height / 2)
@@ -89,7 +89,7 @@ class Conversion {
         if (canvas && this.ctx && this.img) {
           canvas.width = this.img.height
           canvas.height = this.img.width
-          //-90 graus
+          // -90 graus
           this.ctx.translate(this.img.height / 2, this.img.width / 2)
           this.ctx.rotate((-90 * Math.PI) / 180)
           this.ctx.translate(-this.img.width / 2, -this.img.height / 2)

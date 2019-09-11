@@ -14,12 +14,16 @@ export default class VueCropper extends Vue {
   // 渲染图片的地址
   imgs = ''
 
+  // 是否处于加载中
+  isLoading = false
+
   $refs!: {
     canvas: HTMLCanvasElement
   }
 
   // 图片属性
-  @Prop({ default: '' }) img!: string
+  @Prop({ default: '' })
+  readonly img!: string
 
   // 外层容器宽高
   @Prop({
@@ -36,7 +40,7 @@ export default class VueCropper extends Vue {
 
   // 滤镜函数
   @Prop({ default: null })
-  readonly filter!: any
+  readonly filter!: (canvas: HTMLCanvasElement) => HTMLCanvasElement | null
 
   @Prop({ default: 'png' })
   readonly outputType!: string
@@ -85,7 +89,7 @@ export default class VueCropper extends Vue {
       })
       return false
     }
-    // console.log('图片加载成功')
+    console.log(`图片初次加载成功, time is ${~~window.performance.now()}`)
     // 图片加载成功之后的操作 获取图片旋转角度
     let result = {
       orientation: 1,
@@ -96,8 +100,8 @@ export default class VueCropper extends Vue {
       console.log(error)
       result.orientation = 1
     }
-    const orientation = result.orientation
-    console.log(`图片加载成功,orientation为${orientation}`)
+    const orientation = result.orientation || 1
+    console.log(`图片加载成功,orientation为${orientation}, time is ${~~window.performance.now()}`)
 
     let canvas: HTMLCanvasElement = document.createElement('canvas')
     try {
@@ -107,13 +111,19 @@ export default class VueCropper extends Vue {
     }
 
     if (this.filter) {
-      canvas = this.filter(canvas)
+      canvas = this.filter(canvas) || canvas
+      console.log(`图片滤镜渲染成功, time is ${~~window.performance.now()}`)
     }
 
     canvas.toBlob(
       blob => {
         if (blob) {
           this.imgs = URL.createObjectURL(blob)
+          console.log(
+            `新图片渲染成功, time is ${~~window.performance.now()}, 图片真实宽高为${img.width}px,${
+              img.height
+            }px`,
+          )
         } else {
           this.imgs = ''
         }
