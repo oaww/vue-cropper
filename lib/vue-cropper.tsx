@@ -1,6 +1,6 @@
 import { Component, Model, Prop, Watch, Vue, Emit } from 'vue-property-decorator'
 
-import { loadImg, getExif, resetImg } from './common'
+import { loadImg, getExif, resetImg, createImgStyle } from './common'
 
 import './style/index.scss'
 
@@ -19,8 +19,16 @@ export default class VueCropper extends Vue {
 
   canvas: HTMLCanvasElement | null = null
 
+  imgLayout = {
+    width: 0,
+    height: 0,
+  }
+
+  imgStyle = {}
+
   $refs!: {
     canvas: HTMLCanvasElement
+    cropper: HTMLElement
   }
 
   // 图片属性
@@ -44,8 +52,19 @@ export default class VueCropper extends Vue {
   @Prop({ default: null })
   readonly filter!: (canvas: HTMLCanvasElement) => HTMLCanvasElement | null
 
+  // 输出的图片格式
   @Prop({ default: 'png' })
   readonly outputType!: string
+
+  /*
+      图片布局方式 mode 实现和css背景一样的效果
+      contain  居中布局 默认不会缩放 保证图片在容器里面 mode: 'contain'
+      cover    拉伸布局 填充整个容器  mode: 'cover'
+      如果仅有一个数值被给定，这个数值将作为宽度值大小，高度值将被设定为auto。 mode: '50px'
+      如果有两个数值被给定，第一个将作为宽度值大小，第二个作为高度值大小。 mode: '50px 60px'
+  */
+  @Prop({ default: 'contain' })
+  readonly mode!: string
 
   @Watch('img')
   onImgChanged(val: string) {
@@ -79,6 +98,7 @@ export default class VueCropper extends Vue {
   // 检查图片, 修改图片为正确角度
   async checkedImg(url: string) {
     this.isLoading = true
+    this.imgs = ''
     let img: HTMLImageElement
     try {
       img = await loadImg(url)
@@ -140,10 +160,17 @@ export default class VueCropper extends Vue {
       return
     }
     this.canvas.toBlob(
-      blob => {
+      async blob => {
         if (blob) {
-          this.imgs = URL.createObjectURL(blob)
           console.log(`新图片渲染成功, time is ${~~window.performance.now()}`)
+          URL.revokeObjectURL(this.imgs)
+          let url = URL.createObjectURL(blob)
+          try {
+            await this.renderImgLayout(url)
+          } catch (error) {
+            console.log(error)
+          }
+          this.imgs = url
           this.isLoading = false
         } else {
           this.imgs = ''
@@ -155,10 +182,52 @@ export default class VueCropper extends Vue {
     )
   }
 
+  // 渲染图片布局
+  async renderImgLayout(url: string) {
+    let img: HTMLImageElement
+    try {
+      img = await loadImg(url)
+      this.imgLoad({
+        type: 'success',
+        message: '图片加载成功',
+      })
+    } catch (error) {
+      this.imgLoad({
+        type: 'error',
+        message: `图片加载失败${error}`,
+      })
+      this.isLoading = false
+      return false
+    }
+    this.imgLayout = {
+      width: img.width,
+      height: img.height,
+    }
+    const wrapper = {
+      width: 0,
+      height: 0,
+    }
+    wrapper.width = Number(
+      (window.getComputedStyle(this.$refs.cropper).width || '').replace('px', ''),
+    )
+    wrapper.height = Number(
+      (window.getComputedStyle(this.$refs.cropper).height || '').replace('px', ''),
+    )
+    return createImgStyle({ ...this.imgLayout }, wrapper, this.mode)
+  }
+
   render() {
     return (
-      <section class="vue-cropper" style={this.wrapper}>
-        {this.imgs ? <img src={this.imgs} alt="vue-cropper" /> : ''}
+      <section class="vue-cropper" style={this.wrapper} ref="cropper">
+        {this.imgs ? (
+          <section class="cropper-content">
+            <section class="cropper-img" style={this.imgStyle}>
+              <img src={this.imgs} alt="vue-cropper" />
+            </section>
+          </section>
+        ) : (
+          ''
+        )}
 
         {/* 加载动画 */}
         {this.isLoading ? (

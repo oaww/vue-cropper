@@ -1,4 +1,7 @@
 import exif from './exif'
+
+import { InterfaceLayoutStyle } from './interface'
+
 import Conversion from './conversion'
 const conversion = new Conversion()
 
@@ -28,4 +31,13 @@ export const resetImg = (
   orientation: number,
 ): HTMLCanvasElement => {
   return (canvas = conversion.render(img, canvas, orientation))
+}
+
+// 给出图片的大小和容器大小 还有布局方式， 返回布局。
+export const createImgStyle = (
+  imgStyle: InterfaceLayoutStyle,
+  layoutStyle: InterfaceLayoutStyle,
+  mode: string,
+): any => {
+  console.log(imgStyle, layoutStyle, mode)
 }
