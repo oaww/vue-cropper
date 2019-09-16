@@ -100,17 +100,12 @@ class Conversion {
   }
 
   render(img: HTMLImageElement, canvas: HTMLCanvasElement, orientation: number) {
-    this.ctx = canvas.getContext('2d')
+    this.ctx = canvas.getContext('2d') as CanvasRenderingContext2D
     this.img = img
-    if (!this.ctx) {
-      return canvas
-    }
     if (this.handle[orientation]) {
       const curCanvas = this.handle[orientation](canvas)
-      this.ctx = canvas.getContext('2d')
-      if (this.ctx) {
-        this.ctx.drawImage(this.img, 0, 0, this.img.width, this.img.height)
-      }
+      this.ctx = curCanvas.getContext('2d') as CanvasRenderingContext2D
+      this.ctx.drawImage(this.img, 0, 0, this.img.width, this.img.height)
       return curCanvas
     } else {
       canvas.width = img.width

@@ -3,10 +3,7 @@
 // 灰度滤镜
 const grayscale = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
   let gray: number = 0
-  const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d')
-  if (!ctx) {
-    return canvas
-  }
+  const ctx: CanvasRenderingContext2D = canvas.getContext('2d') as CanvasRenderingContext2D
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
   for (let i = 0; i < canvas.width * canvas.height * 4; i += 4) {
     const r: number = imgData.data[i]
@@ -24,10 +21,7 @@ const grayscale = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
 // 黑白
 const blackAndWhite = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
   // 获取图片的像素点 rgba
-  const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d')
-  if (!ctx) {
-    return canvas
-  }
+  const ctx: CanvasRenderingContext2D = canvas.getContext('2d') as CanvasRenderingContext2D
   const weiData = ctx.getImageData(0, 0, canvas.width, canvas.height)
   let gray: number = 0
   let i = 0
@@ -49,10 +43,7 @@ const blackAndWhite = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
 
 const oldPhoto = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
   // 获取图片的像素点 rgba
-  const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d')
-  if (!ctx) {
-    return canvas
-  }
+  const ctx: CanvasRenderingContext2D = canvas.getContext('2d') as CanvasRenderingContext2D
   const weiData = ctx.getImageData(0, 0, canvas.width, canvas.height)
   let i = 0
   while (i < canvas.width * canvas.height * 4) {

@@ -74,11 +74,9 @@ export default class VueCropper extends Vue {
   }
 
   @Watch('filter')
-  onFilterChanged(val: any) {
-    if (val) {
-      this.isLoading = true
-      this.checkedImg(this.img)
-    }
+  onFilterChanged() {
+    this.isLoading = true
+    this.checkedImg(this.img)
   }
 
   // 消息通知
@@ -164,7 +162,7 @@ export default class VueCropper extends Vue {
         if (blob) {
           console.log(`新图片渲染成功, time is ${~~window.performance.now()}`)
           URL.revokeObjectURL(this.imgs)
-          let url = URL.createObjectURL(blob)
+          const url = URL.createObjectURL(blob)
           try {
             await this.renderImgLayout(url)
           } catch (error) {
