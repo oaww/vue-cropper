@@ -4,7 +4,7 @@ import { loadImg, getExif, resetImg, createImgStyle } from './common'
 
 import './style/index.scss'
 
-import { InterfaceLayout, InterfaceImgload } from './interface'
+import { InterfaceLayout, InterfaceImgload, InterfaceModeHandle } from './interface'
 
 @Component
 export default class VueCropper extends Vue {
@@ -64,7 +64,7 @@ export default class VueCropper extends Vue {
       如果有两个数值被给定，第一个将作为宽度值大小，第二个作为高度值大小。 mode: '50px 60px'
   */
   @Prop({ default: 'contain' })
-  readonly mode!: string
+  readonly mode!: keyof InterfaceModeHandle
 
   @Watch('img')
   onImgChanged(val: string) {
@@ -97,6 +97,7 @@ export default class VueCropper extends Vue {
   async checkedImg(url: string) {
     this.isLoading = true
     this.imgs = ''
+    this.canvas = null
     let img: HTMLImageElement
     try {
       img = await loadImg(url)
@@ -115,7 +116,7 @@ export default class VueCropper extends Vue {
     console.log(`图片初次加载成功, time is ${~~window.performance.now()}`)
     // 图片加载成功之后的操作 获取图片旋转角度
     let result = {
-      orientation: 1,
+      orientation: -1,
     }
     try {
       result = await getExif(img)
@@ -123,28 +124,38 @@ export default class VueCropper extends Vue {
       console.log(error)
       result.orientation = 1
     }
-    const orientation = result.orientation || 1
+    const orientation = result.orientation || -1
     console.log(`图片加载成功,orientation为${orientation}, time is ${~~window.performance.now()}`)
+
+    // 图片不需要进行处理的
+    // if ((orientation === 1 || orientation === -1) && !this.filter) {
+    //   try {
+    //     await this.renderImgLayout(url)
+    //   } catch (error) {
+    //     console.error(error)
+    //   }
+    //   this.imgs = this.img
+    //   this.isLoading = false
+    //   return
+    // }
 
     let canvas: HTMLCanvasElement = document.createElement('canvas')
     try {
       canvas = await resetImg(img, canvas, orientation)
     } catch (error) {
-      console.log(error)
+      console.error(error)
     }
-
     this.canvas = canvas
-
     this.renderFilter()
   }
 
   // 滤镜渲染
   renderFilter() {
-    if (!this.canvas) {
-      return
-    }
-    let canvas = this.canvas
     if (this.filter) {
+      if (!this.canvas) {
+        return
+      }
+      let canvas = this.canvas
       canvas = this.filter(canvas) || canvas
       this.canvas = canvas
       console.log(`图片滤镜渲染成功, time is ${~~window.performance.now()}`)
@@ -157,27 +168,32 @@ export default class VueCropper extends Vue {
     if (!this.canvas) {
       return
     }
-    this.canvas.toBlob(
-      async blob => {
-        if (blob) {
-          console.log(`新图片渲染成功, time is ${~~window.performance.now()}`)
-          URL.revokeObjectURL(this.imgs)
-          const url = URL.createObjectURL(blob)
-          try {
-            await this.renderImgLayout(url)
-          } catch (error) {
-            console.log(error)
+    try {
+      this.canvas.toBlob(
+        async blob => {
+          if (blob) {
+            console.log(`新图片渲染成功, time is ${~~window.performance.now()}`)
+            URL.revokeObjectURL(this.imgs)
+            const url = URL.createObjectURL(blob)
+            try {
+              await this.renderImgLayout(url)
+            } catch (e) {
+              console.error(e)
+            }
+            this.imgs = url
+            this.isLoading = false
+          } else {
+            this.imgs = ''
+            this.isLoading = false
           }
-          this.imgs = url
-          this.isLoading = false
-        } else {
-          this.imgs = ''
-          this.isLoading = false
-        }
-      },
-      `image/${this.outputType}`,
-      1,
-    )
+        },
+        `image/${this.outputType}`,
+        1,
+      )
+    } catch (e) {
+      console.error(e)
+      this.isLoading = false
+    }
   }
 
   // 渲染图片布局

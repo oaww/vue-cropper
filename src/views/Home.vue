@@ -3,6 +3,7 @@
     <vue-cropper
       :img="option.img"
       :wrapper="option.wrapper"
+      :mode="option.mode"
       :filter="filter"
     ></vue-cropper>
     <div class="control">
@@ -39,6 +40,7 @@ export default class Home extends Vue {
 
   option =  {
     img: 'http://cdn.xyxiao.cn/bg1.jpg',
+    mode: 'contain',
     wrapper: {
       width: '500px',
       height: '500px',

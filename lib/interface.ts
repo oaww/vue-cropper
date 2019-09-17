@@ -20,3 +20,8 @@ export interface InterfaceLayoutStyle {
   width: number
   height: number
 }
+
+export interface InterfaceModeHandle {
+  contain: () => {}
+  default: () => {}
+}

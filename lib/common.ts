@@ -1,9 +1,13 @@
 import exif from './exif'
 
-import { InterfaceLayoutStyle } from './interface'
+import { InterfaceLayoutStyle, InterfaceModeHandle } from './interface'
 
+// 图片方向校验
 import Conversion from './conversion'
 const conversion = new Conversion()
+
+// 图片布局
+import layout from './Layout'
 
 // 加载图片方法
 export const loadImg = async (url: string): Promise<HTMLImageElement> => {
@@ -37,7 +41,7 @@ export const resetImg = (
 export const createImgStyle = (
   imgStyle: InterfaceLayoutStyle,
   layoutStyle: InterfaceLayoutStyle,
-  mode: string,
+  mode: keyof InterfaceModeHandle,
 ): any => {
-  console.log(imgStyle, layoutStyle, mode)
+  return layout(imgStyle, layoutStyle, mode)
 }
