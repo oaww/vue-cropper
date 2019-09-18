@@ -53,7 +53,7 @@ export default class Home extends Vue {
     img: 'http://cdn.xyxiao.cn/bg1.jpg',
     mode: 'cover',
     wrapper: {
-      width: '500px',
+      width: '70%',
       height: '500px',
     },
   }

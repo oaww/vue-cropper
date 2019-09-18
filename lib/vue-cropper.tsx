@@ -1,15 +1,10 @@
 import { Component, Model, Prop, Watch, Vue, Emit } from 'vue-property-decorator'
 
-import { loadImg, getExif, resetImg, createImgStyle, translateStyle } from './common'
+import { loadImg, getExif, resetImg, createImgStyle, translateStyle, loadFile } from './common'
 
 import './style/index.scss'
 
-import {
-  InterfaceLayout,
-  InterfaceImgload,
-  InterfaceModeHandle,
-  InterfaceRenderImgLayout,
-} from './interface'
+import { InterfaceLayout, InterfaceImgload, InterfaceModeHandle } from './interface'
 
 @Component
 export default class VueCropper extends Vue {
@@ -43,6 +38,9 @@ export default class VueCropper extends Vue {
 
   // 图片css 转化之后的展示效果
   imgExhibitionStyle = {}
+
+  // 拖拽
+  isDrag: boolean = false
 
   $refs!: {
     canvas: HTMLCanvasElement
@@ -108,12 +106,47 @@ export default class VueCropper extends Vue {
     return obj
   }
 
+  drop(e: DragEvent) {
+    e.preventDefault()
+    const dataTransfer = e.dataTransfer as DataTransfer
+    this.isDrag = false
+    loadFile(dataTransfer.files[0]).then(res => {
+      if (res) {
+        this.checkedImg(res)
+      }
+    })
+  }
+
+  dragover(e: Event) {
+    e.preventDefault()
+    this.isDrag = true
+  }
+
+  dragend(e: Event) {
+    e.preventDefault()
+    this.isDrag = false
+  }
+
   created(): void {
     if (this.img) {
       this.checkedImg(this.img)
     } else {
       this.imgs = ''
     }
+
+    // 添加拖拽上传
+    document.addEventListener('dragover', this.dragover, false)
+
+    document.addEventListener('dragend', this.dragend, false)
+
+    document.addEventListener('drop', this.drop, false)
+  }
+
+  destroy() {
+    document.removeEventListener('drop', this.drop, false)
+    document.removeEventListener('dropover', this.dragover, false)
+    document.removeEventListener('dropend', this.dragend, false)
+    console.log('destroy')
   }
 
   // 检查图片, 修改图片为正确角度

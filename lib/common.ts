@@ -77,3 +77,30 @@ export const translateStyle = (style: InterfaceRenderImgLayout): any => {
     },
   }
 }
+
+export const loadFile = async (file: File): Promise<any> => {
+  if (!file) {
+    return ''
+  }
+
+  if (!/\.(gif|jpg|jpeg|png|bmp|GIF|JPG|PNG)$/.test(file.name)) {
+    alert('图片类型必须是.gif,jpeg,jpg,png,bmp中的一种')
+    return ''
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (event: Event) => {
+      let data: string = ''
+      const targetTwo = event.target as FileReader
+      if (typeof targetTwo.result === 'object' && targetTwo.result) {
+        data = window.URL.createObjectURL(new Blob([targetTwo.result]))
+      } else {
+        data = targetTwo.result as string
+      }
+      resolve(data)
+    }
+    reader.onerror = reject
+    // 转化为blob
+    reader.readAsArrayBuffer(file)
+  })
+}

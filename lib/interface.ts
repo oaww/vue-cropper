@@ -23,6 +23,7 @@ export interface InterfaceLayoutStyle {
 
 export interface InterfaceModeHandle {
   contain: () => {}
+  cover: () => {}
   default: () => {}
 }
 
