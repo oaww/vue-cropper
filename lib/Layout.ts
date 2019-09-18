@@ -96,7 +96,6 @@ const modeHandle = {
           scale = height / imgStyle.height
         }
       }
-      console.log(scale)
     } catch (e) {
       console.error(e)
       scale = 1

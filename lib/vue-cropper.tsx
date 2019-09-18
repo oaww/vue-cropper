@@ -97,6 +97,11 @@ export default class VueCropper extends Vue {
     this.checkedImg(this.img)
   }
 
+  @Watch('mode')
+  onModeChanged() {
+    this.checkedImg(this.img)
+  }
+
   // 消息通知
   @Emit('img-load')
   imgLoad(obj: InterfaceImgload): InterfaceImgload {

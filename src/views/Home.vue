@@ -13,6 +13,17 @@
         <input type="file" ref="uploads" id="uploads" style="position:absolute; clip:rect(0 0 0 0);" accept="image/png, image/jpeg, image/gif, image/jpg" @change="uploadImg($event, 1)">
       </section>
       <button class="btn"  @click="randomFilter">切换滤镜</button>
+      <section class="control-item">
+        <span>图片默认渲染方式</span>
+        <select v-model="option.mode">
+          <option value="contain">contain</option>
+          <option value="cover">cover</option>
+          <option value="400px auto">400px auto</option>
+          <option value="auto 400px">auto 400px</option>
+          <option value="50%">50%</option>
+          <option value="auto 50%">auto 50%</option>							
+      </select>
+    </section>
     </div>
   </div>
 </template>
@@ -113,9 +124,16 @@ export default class Home extends Vue {
     width: 100%;
     padding-top: 20px;
     text-align: center;
+    align-items: center;
 
     button {
       margin-right: 20px;
+    }
+
+    .control-item {
+      display: flex;
+      height: 50px;
+      align-items: center;
     }
 
     .btn {
@@ -129,7 +147,7 @@ export default class Home extends Vue {
       text-align: center;
       box-sizing: border-box;
       outline: none;
-      margin: 20px 10px 0px 0px;
+      margin: 0px 10px 0px 0px;
       padding: 9px 15px;
       font-size: 14px;
       border-radius: 4px;
