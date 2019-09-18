@@ -25,3 +25,9 @@ export interface InterfaceModeHandle {
   contain: () => {}
   default: () => {}
 }
+
+export interface InterfaceRenderImgLayout {
+  scale: number
+  imgStyle: InterfaceLayoutStyle
+  layoutStyle: InterfaceLayoutStyle
+}

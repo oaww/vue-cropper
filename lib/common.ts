@@ -1,6 +1,6 @@
 import exif from './exif'
 
-import { InterfaceLayoutStyle, InterfaceModeHandle } from './interface'
+import { InterfaceLayoutStyle, InterfaceModeHandle, InterfaceRenderImgLayout } from './interface'
 
 // 图片方向校验
 import Conversion from './conversion'
@@ -42,6 +42,38 @@ export const createImgStyle = (
   imgStyle: InterfaceLayoutStyle,
   layoutStyle: InterfaceLayoutStyle,
   mode: keyof InterfaceModeHandle,
-): any => {
+): number => {
   return layout(imgStyle, layoutStyle, mode)
+}
+
+export const translateStyle = (style: InterfaceRenderImgLayout): any => {
+  const { scale, imgStyle, layoutStyle } = style
+  const curStyle = {
+    width: scale * imgStyle.width,
+    height: scale * imgStyle.height,
+  }
+  // 图片坐标， 如果不传坐标， 默认是居中布局
+  const x = (layoutStyle.width - curStyle.width) / 2
+  const y = (layoutStyle.height - curStyle.height) / 2
+
+  // 通过坐标轴 计算图片的布局， 默认不旋转的计算
+  const left = (curStyle.width - imgStyle.width) / (2 * scale) + x / scale
+  const top = (curStyle.height - imgStyle.height) / (2 * scale) + y / scale
+
+  // console.log(imgStyle, layoutStyle, curStyle, left, top, 'x--y-', x, y)
+  // 角度
+  const angle = 0
+  return {
+    imgExhibitionStyle: {
+      width: `${imgStyle.width}px`,
+      height: `${imgStyle.height}px`,
+      transform: `scale(${scale}, ${scale}) translate3d(${left}px, ${top}px, 0px) rotateZ(${angle}deg)`,
+    },
+    // 返回左上角的坐标轴
+    imgAxis: {
+      x,
+      y,
+      scale,
+    },
+  }
 }

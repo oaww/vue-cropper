@@ -1,10 +1,15 @@
 import { Component, Model, Prop, Watch, Vue, Emit } from 'vue-property-decorator'
 
-import { loadImg, getExif, resetImg, createImgStyle } from './common'
+import { loadImg, getExif, resetImg, createImgStyle, translateStyle } from './common'
 
 import './style/index.scss'
 
-import { InterfaceLayout, InterfaceImgload, InterfaceModeHandle } from './interface'
+import {
+  InterfaceLayout,
+  InterfaceImgload,
+  InterfaceModeHandle,
+  InterfaceRenderImgLayout,
+} from './interface'
 
 @Component
 export default class VueCropper extends Vue {
@@ -24,7 +29,20 @@ export default class VueCropper extends Vue {
     height: 0,
   }
 
-  imgStyle = {}
+  wrapLayout = {
+    width: 0,
+    height: 0,
+  }
+
+  // 图片属性 包含当前坐标轴和缩放
+  imgAxis = {
+    x: 0,
+    y: 0,
+    scale: 0,
+  }
+
+  // 图片css 转化之后的展示效果
+  imgExhibitionStyle = {}
 
   $refs!: {
     canvas: HTMLCanvasElement
@@ -175,11 +193,19 @@ export default class VueCropper extends Vue {
             console.log(`新图片渲染成功, time is ${~~window.performance.now()}`)
             URL.revokeObjectURL(this.imgs)
             const url = URL.createObjectURL(blob)
+            let scale = 1
             try {
-              await this.renderImgLayout(url)
+              scale = await this.renderImgLayout(url)
             } catch (e) {
               console.error(e)
             }
+            const style = translateStyle({
+              scale,
+              imgStyle: { ...this.imgLayout },
+              layoutStyle: { ...this.wrapLayout },
+            })
+            this.imgExhibitionStyle = style.imgExhibitionStyle
+            this.imgAxis = style.imgAxis
             this.imgs = url
             this.isLoading = false
           } else {
@@ -197,7 +223,7 @@ export default class VueCropper extends Vue {
   }
 
   // 渲染图片布局
-  async renderImgLayout(url: string) {
+  async renderImgLayout(url: string): Promise<number> {
     let img: HTMLImageElement
     try {
       img = await loadImg(url)
@@ -211,11 +237,7 @@ export default class VueCropper extends Vue {
         message: `图片加载失败${error}`,
       })
       this.isLoading = false
-      return false
-    }
-    this.imgLayout = {
-      width: img.width,
-      height: img.height,
+      return 1
     }
     const wrapper = {
       width: 0,
@@ -227,6 +249,12 @@ export default class VueCropper extends Vue {
     wrapper.height = Number(
       (window.getComputedStyle(this.$refs.cropper).height || '').replace('px', ''),
     )
+    this.imgLayout = {
+      width: img.width,
+      height: img.height,
+    }
+    this.wrapLayout = { ...wrapper }
+
     return createImgStyle({ ...this.imgLayout }, wrapper, this.mode)
   }
 
@@ -234,8 +262,8 @@ export default class VueCropper extends Vue {
     return (
       <section class="vue-cropper" style={this.wrapper} ref="cropper">
         {this.imgs ? (
-          <section class="cropper-content">
-            <section class="cropper-img" style={this.imgStyle}>
+          <section class="cropper-box">
+            <section class="cropper-box-canvas" style={this.imgExhibitionStyle}>
               <img src={this.imgs} alt="vue-cropper" />
             </section>
           </section>
