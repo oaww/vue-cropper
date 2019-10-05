@@ -42,6 +42,16 @@ export default class VueCropper extends Vue {
   // 拖拽
   isDrag: boolean = false
 
+  // 裁剪过程中的一些状态
+  // 当前是否可以拖动
+  move: boolean = true
+
+  // 当前正在拖拽生成截图框
+  crop: boolean = false
+
+  // 处于生成了截图的状态
+  cropping: boolean = false
+
   $refs!: {
     canvas: HTMLCanvasElement
     cropper: HTMLElement
@@ -76,15 +86,15 @@ export default class VueCropper extends Vue {
       图片布局方式 mode 实现和css背景一样的效果
       contain  居中布局 默认不会缩放 保证图片在容器里面 mode: 'contain'
       cover    拉伸布局 填充整个容器  mode: 'cover'
-      如果仅有一个数值被给定，这个数值将作为宽度值大小，高度值将被设定为auto。 mode: '50px'
-      如果有两个数值被给定，第一个将作为宽度值大小，第二个作为高度值大小。 mode: '50px 60px'
+      宽度自适应 高度固定  mode: '50px auto'
+      宽度固定 高度自适应 mode: 'auto 50px'
   */
   @Prop({ default: 'contain' })
   readonly mode!: keyof InterfaceModeHandle
 
   @Watch('img')
   onImgChanged(val: string) {
-    if (val) {
+    if (val && val !== this.imgs) {
       this.checkedImg(val)
     }
   }
@@ -102,8 +112,14 @@ export default class VueCropper extends Vue {
 
   // 消息通知
   @Emit('img-load')
-  imgLoad(obj: InterfaceImgload): InterfaceImgload {
+  imgLoadEmit(obj: InterfaceImgload): InterfaceImgload {
     return obj
+  }
+
+  // 消息通知
+  @Emit('img-upload')
+  imgUploadEmit(url: string): string {
+    return url
   }
 
   drop(e: DragEvent) {
@@ -112,7 +128,9 @@ export default class VueCropper extends Vue {
     this.isDrag = false
     loadFile(dataTransfer.files[0]).then(res => {
       if (res) {
-        this.checkedImg(res)
+        // 不要自己更新
+        // this.checkedImg(res)
+        this.imgUploadEmit(res)
       }
     })
   }
@@ -127,28 +145,6 @@ export default class VueCropper extends Vue {
     this.isDrag = false
   }
 
-  mounted(): void {
-    if (this.img) {
-      this.checkedImg(this.img)
-    } else {
-      this.imgs = ''
-    }
-
-    // 添加拖拽上传
-    this.$refs.cropper.addEventListener('dragover', this.dragover, false)
-
-    this.$refs.cropper.addEventListener('dragend', this.dragend, false)
-
-    this.$refs.cropper.addEventListener('drop', this.drop, false)
-  }
-
-  destroy() {
-    this.$refs.cropper.removeEventListener('drop', this.drop, false)
-    this.$refs.cropper.removeEventListener('dropover', this.dragover, false)
-    this.$refs.cropper.removeEventListener('dropend', this.dragend, false)
-    console.log('destroy')
-  }
-
   // 检查图片, 修改图片为正确角度
   async checkedImg(url: string) {
     this.isLoading = true
@@ -157,12 +153,12 @@ export default class VueCropper extends Vue {
     let img: HTMLImageElement
     try {
       img = await loadImg(url)
-      this.imgLoad({
+      this.imgLoadEmit({
         type: 'success',
         message: '图片加载成功',
       })
     } catch (error) {
-      this.imgLoad({
+      this.imgLoadEmit({
         type: 'error',
         message: `图片加载失败${error}`,
       })
@@ -265,12 +261,12 @@ export default class VueCropper extends Vue {
     let img: HTMLImageElement
     try {
       img = await loadImg(url)
-      this.imgLoad({
+      this.imgLoadEmit({
         type: 'success',
         message: '图片加载成功',
       })
     } catch (error) {
-      this.imgLoad({
+      this.imgLoadEmit({
         type: 'error',
         message: `图片加载失败${error}`,
       })
@@ -296,6 +292,45 @@ export default class VueCropper extends Vue {
     return createImgStyle({ ...this.imgLayout }, wrapper, this.mode)
   }
 
+  // 计算拖拽的 class 名
+  computedClassDrag(): string {
+    const className = ['cropper-drag-box']
+    if (this.move && !this.crop) {
+      className.push('cropper-move')
+    }
+
+    if (this.crop) {
+      className.push('cropper-crop')
+    }
+
+    if (this.cropping) {
+      className.push('cropper-modal')
+    }
+    return className.join(' ')
+  }
+
+  mounted(): void {
+    if (this.img) {
+      this.checkedImg(this.img)
+    } else {
+      this.imgs = ''
+    }
+
+    // 添加拖拽上传
+    this.$refs.cropper.addEventListener('dragover', this.dragover, false)
+
+    this.$refs.cropper.addEventListener('dragend', this.dragend, false)
+
+    this.$refs.cropper.addEventListener('drop', this.drop, false)
+  }
+
+  destroy() {
+    this.$refs.cropper.removeEventListener('drop', this.drop, false)
+    this.$refs.cropper.removeEventListener('dropover', this.dragover, false)
+    this.$refs.cropper.removeEventListener('dropend', this.dragend, false)
+    console.log('destroy')
+  }
+
   render() {
     return (
       <section class="vue-cropper" style={this.wrapper} ref="cropper">
@@ -304,6 +339,7 @@ export default class VueCropper extends Vue {
             <section class="cropper-box-canvas" style={this.imgExhibitionStyle}>
               <img src={this.imgs} alt="vue-cropper" />
             </section>
+            <section class={this.computedClassDrag()} />
           </section>
         ) : (
           ''

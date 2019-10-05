@@ -5,6 +5,7 @@
       :wrapper="option.wrapper"
       :mode="option.mode"
       :filter="filter"
+      @img-upload="imgUpload"
     ></vue-cropper>
     <div class="control">
       <button class="btn" @click="randomImg">切换图片</button>
@@ -21,7 +22,7 @@
           <option value="400px auto">400px auto</option>
           <option value="auto 400px">auto 400px</option>
           <option value="50%">50%</option>
-          <option value="auto 50%">auto 50%</option>							
+          <option value="auto 50%">auto 50%</option>
       </select>
     </section>
     </div>
@@ -104,6 +105,10 @@ export default class Home extends Vue {
       // reader.readAsDataURL(file)
       // 转化为blob
       reader.readAsArrayBuffer(file)
+    }
+
+    imgUpload(url: string) {
+      this.option.img = url
     }
 
 }
