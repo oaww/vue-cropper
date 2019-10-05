@@ -127,7 +127,7 @@ export default class VueCropper extends Vue {
     this.isDrag = false
   }
 
-  created(): void {
+  mounted(): void {
     if (this.img) {
       this.checkedImg(this.img)
     } else {
@@ -135,17 +135,17 @@ export default class VueCropper extends Vue {
     }
 
     // 添加拖拽上传
-    document.addEventListener('dragover', this.dragover, false)
+    this.$refs.cropper.addEventListener('dragover', this.dragover, false)
 
-    document.addEventListener('dragend', this.dragend, false)
+    this.$refs.cropper.addEventListener('dragend', this.dragend, false)
 
-    document.addEventListener('drop', this.drop, false)
+    this.$refs.cropper.addEventListener('drop', this.drop, false)
   }
 
   destroy() {
-    document.removeEventListener('drop', this.drop, false)
-    document.removeEventListener('dropover', this.dragover, false)
-    document.removeEventListener('dropend', this.dragend, false)
+    this.$refs.cropper.removeEventListener('drop', this.drop, false)
+    this.$refs.cropper.removeEventListener('dropover', this.dragover, false)
+    this.$refs.cropper.removeEventListener('dropend', this.dragend, false)
     console.log('destroy')
   }
 
