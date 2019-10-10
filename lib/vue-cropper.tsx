@@ -1,10 +1,12 @@
-import { Component, Model, Prop, Watch, Vue, Emit } from 'vue-property-decorator'
+import { Component, Prop, Watch, Vue, Emit } from 'vue-property-decorator'
 
 import { loadImg, getExif, resetImg, createImgStyle, translateStyle, loadFile } from './common'
 
 import './style/index.scss'
 
 import { InterfaceLayout, InterfaceImgload, InterfaceModeHandle } from './interface'
+
+import WatchEvent from './WatchEvent'
 
 @Component
 export default class VueCropper extends Vue {
@@ -322,6 +324,8 @@ export default class VueCropper extends Vue {
     this.$refs.cropper.addEventListener('dragend', this.dragend, false)
 
     this.$refs.cropper.addEventListener('drop', this.drop, false)
+
+    console.log(new WatchEvent())
   }
 
   destroy() {
