@@ -6,8 +6,7 @@ import './style/index.scss'
 
 import { InterfaceLayout, InterfaceImgload, InterfaceModeHandle } from './interface'
 
-import WatchEvent from './WatchEvent'
-
+import TouchEvent from './touch'
 @Component
 export default class VueCropper extends Vue {
   // 高清屏的问题
@@ -325,7 +324,10 @@ export default class VueCropper extends Vue {
 
     this.$refs.cropper.addEventListener('drop', this.drop, false)
 
-    console.log(new WatchEvent())
+    const move = new TouchEvent(this.$refs.cropper)
+    // move.on('mousemove', () => {
+    //   console.log(123456)
+    // })
   }
 
   destroy() {

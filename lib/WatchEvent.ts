@@ -1,5 +1,8 @@
-// 时间监听
-interface DragEvent {
+/**
+ * WactchEvent 消息通知
+ */
+
+interface MessageEvent {
   type: string
 }
 
@@ -19,12 +22,12 @@ class WactchEvent {
     this.handlers.set(type, arr)
   }
 
-  fire(event: DragEvent) {
+  fire(event: MessageEvent) {
     const res: Array<() => void> | undefined = this.handlers.get(event.type)
     if (!res) {
       return
     }
-    res.forEach((func: (event: DragEvent) => void) => {
+    res.forEach((func: (event: MessageEvent) => void) => {
       func(event)
     })
   }
