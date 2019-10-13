@@ -1,20 +1,17 @@
 /**
  * WactchEvent 消息通知
  */
-
-interface MessageEvent {
-  type: string
-}
+import { InterfaceMessageEvent } from './interface'
 
 class WactchEvent {
-  handlers: Map<string, Array<() => void>>
+  handlers: Map<string, Array<(message: InterfaceMessageEvent) => void>>
   constructor() {
     this.handlers = new Map()
   }
 
-  addHandler(type: string, handler: () => void) {
-    const res: Array<() => void> | undefined = this.handlers.get(type)
-    let arr: Array<() => void> = []
+  addHandler(type: string, handler: (message: InterfaceMessageEvent) => void) {
+    const res: Array<(message: InterfaceMessageEvent) => void> | undefined = this.handlers.get(type)
+    let arr: Array<(message: InterfaceMessageEvent) => void> = []
     if (res) {
       arr = [...res]
     }
@@ -22,18 +19,20 @@ class WactchEvent {
     this.handlers.set(type, arr)
   }
 
-  fire(event: MessageEvent) {
-    const res: Array<() => void> | undefined = this.handlers.get(event.type)
+  fire(event: InterfaceMessageEvent) {
+    const res: Array<(message: InterfaceMessageEvent) => void> | undefined = this.handlers.get(
+      event.type,
+    )
     if (!res) {
       return
     }
-    res.forEach((func: (event: MessageEvent) => void) => {
+    res.forEach((func: (event: InterfaceMessageEvent) => void) => {
       func(event)
     })
   }
 
-  removeHandler(type: string, handler: () => void) {
-    const res: Array<() => void> | undefined = this.handlers.get(type)
+  removeHandler(type: string, handler: (message: InterfaceMessageEvent) => void) {
+    const res: Array<(message: InterfaceMessageEvent) => void> | undefined = this.handlers.get(type)
     if (!res) {
       return
     }

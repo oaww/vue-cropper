@@ -32,3 +32,8 @@ export interface InterfaceRenderImgLayout {
   imgStyle: InterfaceLayoutStyle
   layoutStyle: InterfaceLayoutStyle
 }
+
+export interface InterfaceMessageEvent {
+  type: string
+  event?: Event
+}

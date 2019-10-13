@@ -4,6 +4,7 @@
 
 // 消息通知
 import WatchEvent from '../watchEvent'
+import { InterfaceMessageEvent } from '../interface'
 
 interface InterfaceAxis {
   x: number
@@ -58,26 +59,41 @@ class TouchEvent {
     }
 
     this.watcher = new WatchEvent()
-    this.element.addEventListener('mousedown', this.start.bind(this))
+
+    // 绑定监听事件的this
+    this.start = this.start.bind(this)
+    this.move = this.move.bind(this)
+    this.stop = this.stop.bind(this)
+
+    this.element.addEventListener('mousedown', this.start)
   }
-  start() {
-    this.element.addEventListener('mousemove', this.move.bind(this))
-    this.element.addEventListener('mouseup', this.stop.bind(this))
-  }
-  move() {
+  start(event: Event) {
     this.watcher.fire({
-      type: 'mousemove',
+      type: 'down',
+      event,
     })
+    this.element.addEventListener('mousemove', this.move)
+    this.element.addEventListener('mouseup', this.stop)
+    // console.log('down')
   }
-  stop() {
+  move(event: Event) {
     this.watcher.fire({
-      type: 'mouseup',
+      type: 'move',
+      event,
     })
+    // console.log('move')
+  }
+  stop(event: Event) {
+    this.watcher.fire({
+      type: 'up',
+      event,
+    })
+    // console.log('stop')
     this.element.removeEventListener('mousemove', this.move)
     this.element.removeEventListener('mouseup', this.stop)
   }
   // 绑定事件
-  on(type: string, handler: () => void) {
+  on(type: string, handler: (message: InterfaceMessageEvent) => void) {
     this.watcher.addHandler(type, handler)
   }
   // 解绑事件

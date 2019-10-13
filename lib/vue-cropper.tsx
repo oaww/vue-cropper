@@ -325,9 +325,15 @@ export default class VueCropper extends Vue {
     this.$refs.cropper.addEventListener('drop', this.drop, false)
 
     const move = new TouchEvent(this.$refs.cropper)
-    // move.on('mousemove', () => {
-    //   console.log(123456)
-    // })
+    move.on('down', message => {
+      console.log(message)
+    })
+    move.on('move', message => {
+      console.log(message)
+    })
+    move.on('up', message => {
+      console.log(message)
+    })
   }
 
   destroy() {

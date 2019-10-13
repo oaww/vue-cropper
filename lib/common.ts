@@ -7,7 +7,7 @@ import Conversion from './conversion'
 const conversion = new Conversion()
 
 // 图片布局
-import layout from './layout'
+import layout from './layoutBox'
 
 // 加载图片方法
 export const loadImg = async (url: string): Promise<HTMLImageElement> => {
