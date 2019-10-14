@@ -4,12 +4,7 @@
 
 // 消息通知
 import WatchEvent from '../watchEvent'
-import { InterfaceMessageEvent } from '../interface'
-
-interface InterfaceAxis {
-  x: number
-  y: number
-}
+import { InterfaceMessageEvent, InterfaceAxis } from '../interface'
 
 /**
  * 1. 单指 用于计算移动点的坐标距离
@@ -39,6 +34,7 @@ interface InterfaceAxis {
 
 // 当前设备是否判断是否支持touch事件
 const SUPPORT_TOUCH = 'ontouchstart' in window
+const SUPPORT_MOUSE = 'onmouseup' in window
 
 class TouchEvent {
   // 默认配置属性
@@ -60,37 +56,116 @@ class TouchEvent {
 
     this.watcher = new WatchEvent()
 
-    // 绑定监听事件的this
-    this.start = this.start.bind(this)
-    this.move = this.move.bind(this)
-    this.stop = this.stop.bind(this)
+    if (SUPPORT_MOUSE) {
+      // 绑定监听事件的this
+      this.start = this.start.bind(this)
+      this.move = this.move.bind(this)
+      this.stop = this.stop.bind(this)
+      this.element.addEventListener('mousedown', this.start)
+    }
+    if (SUPPORT_TOUCH) {
+      this.startTouch = this.startTouch.bind(this)
+      this.moveTouch = this.moveTouch.bind(this)
+      this.stopTouch = this.stopTouch.bind(this)
 
-    this.element.addEventListener('mousedown', this.start)
+      this.move = this.move.bind(this)
+      this.stop = this.stop.bind(this)
+      this.element.addEventListener('touchstart', this.startTouch)
+    }
   }
-  start(event: Event) {
+  getAxis(event: MouseEvent): InterfaceAxis {
+    const axis = {
+      x: 0,
+      y: 0,
+    }
+    axis.x = event.clientX
+    axis.y = event.clientY
+    return axis
+  }
+
+  start(event: MouseEvent) {
+    event.preventDefault()
+    // 鼠标按下去或者手按下去
+    this.pre = this.getAxis(event)
     this.watcher.fire({
       type: 'down',
       event,
     })
-    this.element.addEventListener('mousemove', this.move)
-    this.element.addEventListener('mouseup', this.stop)
+    window.addEventListener('mousemove', this.move)
+    window.addEventListener('mouseup', this.stop)
     // console.log('down')
   }
-  move(event: Event) {
+
+  startTouch(event: any) {
+    // 鼠标按下去或者手按下去
+    const x = event.touches[0].clientX
+    const y = event.touches[0].clientY
+    this.pre = {
+      x,
+      y,
+    }
+    this.watcher.fire({
+      type: 'down',
+      event,
+    })
+    window.addEventListener('touchmove', this.moveTouch)
+    window.addEventListener('touchend', this.stopTouch)
+  }
+
+  move(event: MouseEvent) {
+    event.preventDefault()
+    const nowAxis = this.getAxis(event)
     this.watcher.fire({
       type: 'move',
       event,
+      change: {
+        x: nowAxis.x - this.pre.x,
+        y: nowAxis.y - this.pre.y,
+      },
     })
+    this.pre = {
+      x: event.clientX,
+      y: event.clientY,
+    }
     // console.log('move')
   }
-  stop(event: Event) {
+
+  moveTouch(event: any) {
+    // 鼠标按下去或者手按下去
+    const x = event.touches[0].clientX
+    const y = event.touches[0].clientY
+    this.watcher.fire({
+      type: 'move',
+      event,
+      change: {
+        x: x - this.pre.x,
+        y: y - this.pre.y,
+      },
+    })
+    this.pre = {
+      x,
+      y,
+    }
+  }
+
+  stop(event: MouseEvent) {
     this.watcher.fire({
       type: 'up',
       event,
     })
     // console.log('stop')
-    this.element.removeEventListener('mousemove', this.move)
-    this.element.removeEventListener('mouseup', this.stop)
+    window.removeEventListener('mousemove', this.move)
+    window.removeEventListener('mouseup', this.stop)
+  }
+
+  stopTouch(event: any) {
+    this.watcher.fire({
+      type: 'up',
+      event,
+    })
+    // console.log('stop')
+    window.removeEventListener('touchmove', this.moveTouch)
+    window.removeEventListener('touchend', this.stopTouch)
   }
   // 绑定事件
   on(type: string, handler: (message: InterfaceMessageEvent) => void) {

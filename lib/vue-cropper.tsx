@@ -4,7 +4,12 @@ import { loadImg, getExif, resetImg, createImgStyle, translateStyle, loadFile } 
 
 import './style/index.scss'
 
-import { InterfaceLayout, InterfaceImgload, InterfaceModeHandle } from './interface'
+import {
+  InterfaceLayout,
+  InterfaceImgload,
+  InterfaceModeHandle,
+  InterfaceMessageEvent,
+} from './interface'
 
 import TouchEvent from './touch'
 @Component
@@ -310,6 +315,30 @@ export default class VueCropper extends Vue {
     return className.join(' ')
   }
 
+  // 移动图片
+  moveImg(message: InterfaceMessageEvent) {
+    // 拿到的是变化之后的坐标轴
+    if (message.change) {
+      // console.log(message.change)
+      // 去更改图片的位置
+      const axis = {
+        x: message.change.x + this.imgAxis.x,
+        y: message.change.y + this.imgAxis.y,
+      }
+      const style = translateStyle(
+        {
+          scale: this.imgAxis.scale,
+          imgStyle: { ...this.imgLayout },
+          layoutStyle: { ...this.wrapLayout },
+        },
+        axis,
+      )
+      this.imgExhibitionStyle = style.imgExhibitionStyle
+      this.imgAxis = style.imgAxis
+      // console.log(style)
+    }
+  }
+
   mounted(): void {
     if (this.img) {
       this.checkedImg(this.img)
@@ -318,22 +347,15 @@ export default class VueCropper extends Vue {
     }
 
     // 添加拖拽上传
-    this.$refs.cropper.addEventListener('dragover', this.dragover, false)
+    const dom = this.$refs.cropper
+    dom.addEventListener('dragover', this.dragover, false)
 
-    this.$refs.cropper.addEventListener('dragend', this.dragend, false)
+    dom.addEventListener('dragend', this.dragend, false)
 
-    this.$refs.cropper.addEventListener('drop', this.drop, false)
+    dom.addEventListener('drop', this.drop, false)
 
-    const move = new TouchEvent(this.$refs.cropper)
-    move.on('down', message => {
-      console.log(message)
-    })
-    move.on('move', message => {
-      console.log(message)
-    })
-    move.on('up', message => {
-      console.log(message)
-    })
+    const move = new TouchEvent(dom)
+    move.on('move', this.moveImg)
   }
 
   destroy() {

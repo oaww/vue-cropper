@@ -1,6 +1,11 @@
 import exif from './exif'
 
-import { InterfaceLayoutStyle, InterfaceModeHandle, InterfaceRenderImgLayout } from './interface'
+import {
+  InterfaceLayoutStyle,
+  InterfaceModeHandle,
+  InterfaceRenderImgLayout,
+  InterfaceAxis,
+} from './interface'
 
 // 图片方向校验
 import Conversion from './conversion'
@@ -46,15 +51,20 @@ export const createImgStyle = (
   return layout(imgStyle, layoutStyle, mode)
 }
 
-export const translateStyle = (style: InterfaceRenderImgLayout): any => {
+export const translateStyle = (style: InterfaceRenderImgLayout, axis?: InterfaceAxis): any => {
   const { scale, imgStyle, layoutStyle } = style
   const curStyle = {
     width: scale * imgStyle.width,
     height: scale * imgStyle.height,
   }
   // 图片坐标， 如果不传坐标， 默认是居中布局
-  const x = (layoutStyle.width - curStyle.width) / 2
-  const y = (layoutStyle.height - curStyle.height) / 2
+  let x = (layoutStyle.width - curStyle.width) / 2
+  let y = (layoutStyle.height - curStyle.height) / 2
+
+  if (axis) {
+    x = axis.x
+    y = axis.y
+  }
 
   // 通过坐标轴 计算图片的布局， 默认不旋转的计算
   const left = (curStyle.width - imgStyle.width) / (2 * scale) + x / scale
