@@ -354,8 +354,8 @@ export default class VueCropper extends Vue {
 
     dom.addEventListener('drop', this.drop, false)
 
-    const move = new TouchEvent(dom)
-    move.on('move', this.moveImg)
+    const cropperMove = new TouchEvent(dom)
+    cropperMove.on('move', this.moveImg)
   }
 
   destroy() {

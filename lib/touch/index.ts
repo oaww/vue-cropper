@@ -85,6 +85,10 @@ class TouchEvent {
 
   start(event: MouseEvent) {
     event.preventDefault()
+    // 只有鼠标左键才触发
+    if (event.which !== 1) {
+      return
+    }
     // 鼠标按下去或者手按下去
     this.pre = this.getAxis(event)
     this.watcher.fire({
