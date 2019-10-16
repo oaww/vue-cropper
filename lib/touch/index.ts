@@ -38,16 +38,12 @@ const SUPPORT_MOUSE = 'onmouseup' in window
 
 class TouchEvent {
   // 默认配置属性
-  static defaultOptions: any = {}
   element: HTMLElement
-  options: any
   pre: InterfaceAxis
   watcher: WatchEvent
-  constructor(element: HTMLElement, options?: any) {
+  constructor(element: HTMLElement) {
     // 节点
     this.element = element
-    // 配置属性
-    this.options = Object.assign({}, TouchEvent.defaultOptions, options)
 
     this.pre = {
       x: 0,

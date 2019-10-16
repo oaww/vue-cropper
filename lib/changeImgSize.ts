@@ -49,7 +49,7 @@ export const changeImgSize = (e: any, scale: number, imgStyle: InterfaceLayoutSt
     const set = setTimeout(() => {
       scaling = false
       coe += 0.01
-    }, 20)
+    }, 100)
   }
   scaling = true
   return nowScale

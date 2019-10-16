@@ -356,6 +356,7 @@ export default class VueCropper extends Vue {
   mouseScroll(e: Event) {
     e.preventDefault()
     const scale = changeImgSize(e, this.imgAxis.scale, this.imgLayout)
+    // console.log(scale)
     this.changeScale(scale)
   }
 
