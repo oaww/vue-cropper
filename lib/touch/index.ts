@@ -55,23 +55,6 @@ class TouchEvent {
     }
 
     this.watcher = new WatchEvent()
-
-    if (SUPPORT_MOUSE) {
-      // 绑定监听事件的this
-      this.start = this.start.bind(this)
-      this.move = this.move.bind(this)
-      this.stop = this.stop.bind(this)
-      this.element.addEventListener('mousedown', this.start)
-    }
-    if (SUPPORT_TOUCH) {
-      this.startTouch = this.startTouch.bind(this)
-      this.moveTouch = this.moveTouch.bind(this)
-      this.stopTouch = this.stopTouch.bind(this)
-
-      this.move = this.move.bind(this)
-      this.stop = this.stop.bind(this)
-      this.element.addEventListener('touchstart', this.startTouch)
-    }
   }
   getAxis(event: MouseEvent): InterfaceAxis {
     const axis = {
@@ -120,7 +103,7 @@ class TouchEvent {
     event.preventDefault()
     const nowAxis = this.getAxis(event)
     this.watcher.fire({
-      type: 'move',
+      type: 'down-to-move',
       event,
       change: {
         x: nowAxis.x - this.pre.x,
@@ -139,7 +122,7 @@ class TouchEvent {
     const x = event.touches[0].clientX
     const y = event.touches[0].clientY
     this.watcher.fire({
-      type: 'move',
+      type: 'down-to-move',
       event,
       change: {
         x: x - this.pre.x,
@@ -174,10 +157,38 @@ class TouchEvent {
   // 绑定事件
   on(type: string, handler: (message: InterfaceMessageEvent) => void) {
     this.watcher.addHandler(type, handler)
+    if (type === 'down-to-move') {
+      if (SUPPORT_MOUSE) {
+        // 绑定监听事件的this
+        this.start = this.start.bind(this)
+        this.move = this.move.bind(this)
+        this.stop = this.stop.bind(this)
+        this.element.addEventListener('mousedown', this.start)
+      }
+      if (SUPPORT_TOUCH) {
+        this.startTouch = this.startTouch.bind(this)
+        this.moveTouch = this.moveTouch.bind(this)
+        this.stopTouch = this.stopTouch.bind(this)
+        this.move = this.move.bind(this)
+        this.stop = this.stop.bind(this)
+        this.element.addEventListener('touchstart', this.startTouch)
+      }
+      return
+    }
   }
   // 解绑事件
   off(type: string, handler: () => void) {
     this.watcher.removeHandler(type, handler)
+    if (type === 'down-to-move') {
+      if (SUPPORT_MOUSE) {
+        // 绑定监听事件的this
+        this.element.removeEventListener('mousedown', this.start)
+      }
+      if (SUPPORT_TOUCH) {
+        this.element.removeEventListener('touchstart', this.startTouch)
+      }
+      return
+    }
   }
 }
 

@@ -1,6 +1,7 @@
 import { Component, Prop, Watch, Vue, Emit } from 'vue-property-decorator'
 
 import { loadImg, getExif, resetImg, createImgStyle, translateStyle, loadFile } from './common'
+import { supportWheel, changeImgSize } from './changeImgSize'
 
 import './style/index.scss'
 
@@ -63,7 +64,7 @@ export default class VueCropper extends Vue {
     cropper: HTMLElement
   }
 
-  // 图片属性
+  // 图片地址
   @Prop({ default: '' })
   readonly img!: string
 
@@ -339,6 +340,43 @@ export default class VueCropper extends Vue {
     }
   }
 
+  // 鼠标移入截图组件
+  mouseInCropper() {
+    window.addEventListener(supportWheel, this.mouseScroll, {
+      passive: false,
+    })
+  }
+
+  // 鼠标移出截图组件
+  mouseOutCropper() {
+    window.removeEventListener(supportWheel, this.mouseScroll)
+  }
+
+  // 鼠标滚动事件
+  mouseScroll(e: Event) {
+    e.preventDefault()
+    const scale = changeImgSize(e, this.imgAxis.scale, this.imgLayout)
+    this.changeScale(scale)
+  }
+
+  // 修改图片缩放比例函数
+  changeScale(scale: number) {
+    const axis = {
+      x: this.imgAxis.x - (this.imgLayout.width * (scale - this.imgAxis.scale)) / 2,
+      y: this.imgAxis.y - (this.imgLayout.height * (scale - this.imgAxis.scale)) / 2,
+    }
+    const style = translateStyle(
+      {
+        scale,
+        imgStyle: { ...this.imgLayout },
+        layoutStyle: { ...this.wrapLayout },
+      },
+      axis,
+    )
+    this.imgExhibitionStyle = style.imgExhibitionStyle
+    this.imgAxis = style.imgAxis
+  }
+
   mounted(): void {
     if (this.img) {
       this.checkedImg(this.img)
@@ -355,7 +393,7 @@ export default class VueCropper extends Vue {
     dom.addEventListener('drop', this.drop, false)
 
     const cropperMove = new TouchEvent(dom)
-    cropperMove.on('move', this.moveImg)
+    cropperMove.on('down-to-move', this.moveImg)
   }
 
   destroy() {
@@ -367,7 +405,13 @@ export default class VueCropper extends Vue {
 
   render() {
     return (
-      <section class="vue-cropper" style={this.wrapper} ref="cropper">
+      <section
+        class="vue-cropper"
+        style={this.wrapper}
+        ref="cropper"
+        onmouseover={this.mouseInCropper}
+        onmouseout={this.mouseOutCropper}
+      >
         {this.imgs ? (
           <section class="cropper-box">
             <section class="cropper-box-canvas" style={this.imgExhibitionStyle}>
