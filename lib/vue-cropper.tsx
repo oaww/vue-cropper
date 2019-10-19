@@ -64,6 +64,8 @@ export default class VueCropper extends Vue {
     cropper: HTMLElement
   }
 
+  cropperMove: TouchEvent | null = null
+
   // 图片地址
   @Prop({ default: '' })
   readonly img!: string
@@ -299,23 +301,6 @@ export default class VueCropper extends Vue {
     return createImgStyle({ ...this.imgLayout }, wrapper, this.mode)
   }
 
-  // 计算拖拽的 class 名
-  computedClassDrag(): string {
-    const className = ['cropper-drag-box']
-    if (this.move && !this.crop) {
-      className.push('cropper-move')
-    }
-
-    if (this.crop) {
-      className.push('cropper-crop')
-    }
-
-    if (this.cropping) {
-      className.push('cropper-modal')
-    }
-    return className.join(' ')
-  }
-
   // 移动图片
   moveImg(message: InterfaceMessageEvent) {
     // 拿到的是变化之后的坐标轴
@@ -362,10 +347,12 @@ export default class VueCropper extends Vue {
 
   // 修改图片缩放比例函数
   changeScale(scale: number) {
+    // 保持当前坐标比例
     const axis = {
       x: this.imgAxis.x - (this.imgLayout.width * (scale - this.imgAxis.scale)) / 2,
       y: this.imgAxis.y - (this.imgLayout.height * (scale - this.imgAxis.scale)) / 2,
     }
+
     const style = translateStyle(
       {
         scale,
@@ -388,20 +375,39 @@ export default class VueCropper extends Vue {
     // 添加拖拽上传
     const dom = this.$refs.cropper
     dom.addEventListener('dragover', this.dragover, false)
-
     dom.addEventListener('dragend', this.dragend, false)
-
     dom.addEventListener('drop', this.drop, false)
 
-    const cropperMove = new TouchEvent(dom)
-    cropperMove.on('down-to-move', this.moveImg)
+    this.cropperMove = new TouchEvent(dom)
+
+    this.cropperMove.on('down-to-move', this.moveImg)
   }
 
   destroy() {
     this.$refs.cropper.removeEventListener('drop', this.drop, false)
     this.$refs.cropper.removeEventListener('dropover', this.dragover, false)
     this.$refs.cropper.removeEventListener('dropend', this.dragend, false)
+    if (this.cropperMove) {
+      this.cropperMove.on('down-to-move', this.moveImg)
+    }
     console.log('destroy')
+  }
+
+  // 计算拖拽的 class 名
+  computedClassDrag(): string {
+    const className = ['cropper-drag-box']
+    if (this.move && !this.crop) {
+      className.push('cropper-move')
+    }
+
+    if (this.crop) {
+      className.push('cropper-crop')
+    }
+
+    if (this.cropping) {
+      className.push('cropper-modal')
+    }
+    return className.join(' ')
   }
 
   render() {
@@ -415,6 +421,7 @@ export default class VueCropper extends Vue {
       >
         {this.imgs ? (
           <section class="cropper-box">
+            {/* 图片展示框 */}
             <section class="cropper-box-canvas" style={this.imgExhibitionStyle}>
               <img src={this.imgs} alt="vue-cropper" />
             </section>
