@@ -122,6 +122,8 @@ export default class Home extends Vue {
     justify-content: center;
     align-items: center;
     padding-top: 50px;
+    background-color: #c0ccda;
+    min-height: 100vh;
   }
 
   .control {

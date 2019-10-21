@@ -59,14 +59,14 @@ export default class VueCropper extends Vue {
 
   // 截图框的坐标
   cropAxis: InterfaceAxis = {
-    x: 400,
-    y: 200,
+    x: 325,
+    y: 150,
   }
 
   // 截图框的大小
   cropLayout: InterfaceLayoutStyle = {
-    width: 100,
-    height: 100,
+    width: 200,
+    height: 200,
   }
 
   // 截图框的样式， 包含外层和里面
@@ -394,8 +394,34 @@ export default class VueCropper extends Vue {
         x: message.change.x + this.cropAxis.x,
         y: message.change.y + this.cropAxis.y,
       }
-      this.cropAxis = axis
+      this.checkedCrop(axis)
     }
+  }
+
+  // 检查截图框位置
+  checkedCrop(axis: InterfaceAxis) {
+    // 截图了默认不允许超过容器
+    const maxLeft = 0
+    const maxTop = 0
+    const maxRight = this.wrapLayout.width - this.cropLayout.width
+    const maxBottom = this.wrapLayout.height - this.cropLayout.height
+    if (axis.x < maxLeft) {
+      axis.x = maxLeft
+    }
+
+    if (axis.y < maxTop) {
+      axis.y = maxTop
+    }
+
+    if (axis.x > maxRight) {
+      axis.x = maxRight
+    }
+
+    if (axis.y > maxBottom) {
+      axis.y = maxBottom
+    }
+
+    this.cropAxis = axis
   }
 
   // 鼠标移入截图组件
