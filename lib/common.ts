@@ -67,23 +67,26 @@ export const translateStyle = (style: InterfaceRenderImgLayout, axis?: Interface
   }
 
   // 通过坐标轴 计算图片的布局， 默认不旋转的计算
+  // const left = x / scale
+  // const top = y / scale
   const left = (curStyle.width - imgStyle.width) / (2 * scale) + x / scale
   const top = (curStyle.height - imgStyle.height) / (2 * scale) + y / scale
 
   // console.log(imgStyle, layoutStyle, curStyle, left, top, 'x--y-', x, y)
   // 角度
-  const angle = 0
+  const rotate = 0
   return {
     imgExhibitionStyle: {
       width: `${imgStyle.width}px`,
       height: `${imgStyle.height}px`,
-      transform: `scale(${scale}, ${scale}) translate3d(${left}px, ${top}px, 0px) rotateZ(${angle}deg)`,
+      transform: `scale(${scale}, ${scale}) translate3d(${left}px, ${top}px, 0px) rotateZ(${rotate}deg)`,
     },
     // 返回左上角的坐标轴
     imgAxis: {
       x,
       y,
       scale,
+      rotate,
     },
   }
 }

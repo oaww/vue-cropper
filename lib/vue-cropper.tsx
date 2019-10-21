@@ -10,6 +10,10 @@ import {
   InterfaceImgload,
   InterfaceModeHandle,
   InterfaceMessageEvent,
+  InterfaceAxis,
+  InterfaceImgAxis,
+  InterfaceLayoutStyle,
+  InterfaceTransformStyle,
 } from './interface'
 
 import TouchEvent from './touch'
@@ -26,25 +30,50 @@ export default class VueCropper extends Vue {
 
   canvas: HTMLCanvasElement | null = null
 
-  imgLayout = {
+  // 图片真实宽高
+  imgLayout: InterfaceLayoutStyle = {
     width: 0,
     height: 0,
   }
 
-  wrapLayout = {
+  // 外层容器宽高
+  wrapLayout: InterfaceLayoutStyle = {
     width: 0,
     height: 0,
   }
 
   // 图片属性 包含当前坐标轴和缩放
-  imgAxis = {
+  imgAxis: InterfaceImgAxis = {
     x: 0,
     y: 0,
     scale: 0,
+    rotate: 0,
   }
 
   // 图片css 转化之后的展示效果
-  imgExhibitionStyle = {}
+  imgExhibitionStyle: InterfaceTransformStyle = {
+    width: '',
+    height: '',
+    transform: '',
+  }
+
+  // 截图框的坐标
+  cropAxis: InterfaceAxis = {
+    x: 400,
+    y: 200,
+  }
+
+  // 截图框的大小
+  cropLayout: InterfaceLayoutStyle = {
+    width: 100,
+    height: 100,
+  }
+
+  // 截图框的样式， 包含外层和里面
+  cropExhibitionStyle = {
+    div: {},
+    img: {},
+  }
 
   // 拖拽
   isDrag: boolean = false
@@ -57,14 +86,18 @@ export default class VueCropper extends Vue {
   crop: boolean = false
 
   // 处于生成了截图的状态
-  cropping: boolean = false
+  cropping: boolean = true
 
   $refs!: {
     canvas: HTMLCanvasElement
     cropper: HTMLElement
+    cropperImg: HTMLElement
+    cropperBox: HTMLElement
   }
 
-  cropperMove: TouchEvent | null = null
+  cropImg: TouchEvent | null = null
+
+  cropBox: TouchEvent | null = null
 
   // 图片地址
   @Prop({ default: '' })
@@ -101,10 +134,38 @@ export default class VueCropper extends Vue {
   @Prop({ default: 'contain' })
   readonly mode!: keyof InterfaceModeHandle
 
+  // 截图框的颜色
+  @Prop({ default: '#fff' })
+  readonly cropColor!: string
+
   @Watch('img')
   onImgChanged(val: string) {
     if (val && val !== this.imgs) {
       this.checkedImg(val)
+    }
+  }
+
+  @Watch('imgs')
+  onImgsChanged(val: string) {
+    if (val) {
+      this.$nextTick(() => {
+        this.bindMoveImg()
+      })
+
+      if (this.cropping) {
+        this.$nextTick(() => {
+          this.bindMoveCrop()
+        })
+      }
+    }
+  }
+
+  @Watch('cropping')
+  onCroppingChanged(val: boolean) {
+    if (val) {
+      this.$nextTick(() => {
+        this.bindMoveCrop()
+      })
     }
   }
 
@@ -325,6 +386,18 @@ export default class VueCropper extends Vue {
     }
   }
 
+  // 移动截图框
+  moveCrop(message: InterfaceMessageEvent) {
+    // 拿到的是变化之后的坐标轴
+    if (message.change) {
+      const axis = {
+        x: message.change.x + this.cropAxis.x,
+        y: message.change.y + this.cropAxis.y,
+      }
+      this.cropAxis = axis
+    }
+  }
+
   // 鼠标移入截图组件
   mouseInCropper() {
     window.addEventListener(supportWheel, this.mouseScroll, {
@@ -365,6 +438,35 @@ export default class VueCropper extends Vue {
     this.imgAxis = style.imgAxis
   }
 
+  // 绑定拖拽
+  bindMoveImg(): void {
+    this.unbindMoveImg()
+    const domImg = this.$refs.cropperImg
+    this.cropImg = new TouchEvent(domImg)
+    this.cropImg.on('down-to-move', this.moveImg)
+  }
+
+  unbindMoveImg(): void {
+    if (this.cropImg) {
+      this.cropImg.off('down-to-move', this.moveImg)
+    }
+  }
+
+  bindMoveCrop(): void {
+    this.unbindMoveCrop()
+    const domBox = this.$refs.cropperBox
+    this.cropBox = new TouchEvent(domBox)
+    this.cropBox.on('down-to-move', this.moveCrop)
+    this.cropImg = null
+  }
+
+  unbindMoveCrop(): void {
+    if (this.cropBox) {
+      this.cropBox.off('down-to-move', this.moveCrop)
+      this.cropBox = null
+    }
+  }
+
   mounted(): void {
     if (this.img) {
       this.checkedImg(this.img)
@@ -377,19 +479,14 @@ export default class VueCropper extends Vue {
     dom.addEventListener('dragover', this.dragover, false)
     dom.addEventListener('dragend', this.dragend, false)
     dom.addEventListener('drop', this.drop, false)
-
-    this.cropperMove = new TouchEvent(dom)
-
-    this.cropperMove.on('down-to-move', this.moveImg)
   }
 
-  destroy() {
+  destroy(): void {
     this.$refs.cropper.removeEventListener('drop', this.drop, false)
     this.$refs.cropper.removeEventListener('dropover', this.dragover, false)
     this.$refs.cropper.removeEventListener('dropend', this.dragend, false)
-    if (this.cropperMove) {
-      this.cropperMove.on('down-to-move', this.moveImg)
-    }
+    this.unbindMoveImg()
+    this.unbindMoveCrop()
     console.log('destroy')
   }
 
@@ -410,6 +507,39 @@ export default class VueCropper extends Vue {
     return className.join(' ')
   }
 
+  // 计算截图框外层样式
+  getCropBoxStyle(): InterfaceTransformStyle {
+    const style = {
+      width: `${this.cropLayout.width}px`,
+      height: `${this.cropLayout.height}px`,
+      transform: `translate3d(${this.cropAxis.x}px, ${this.cropAxis.y}px, 0)`,
+    }
+    this.cropExhibitionStyle.div = style
+    return style
+  }
+
+  // 计算截图框图片的样式
+  getCropImgStyle(): InterfaceTransformStyle {
+    const scale = this.imgAxis.scale
+    // 图片放大所带来的扩张坐标补充  加   图片坐标和截图坐标的差值
+    const x =
+      ((scale - 1) * this.imgLayout.width) / (2 * scale) +
+      (this.imgAxis.x - this.cropAxis.x) / scale
+    const y =
+      ((scale - 1) * this.imgLayout.height) / (2 * scale) +
+      (this.imgAxis.y - this.cropAxis.y) / scale
+    // console.log({... this.imgAxis}, '---box')
+    const style = {
+      width: `${this.imgLayout.width}px`,
+      height: `${this.imgLayout.height}px`,
+      transform: `scale(${scale}, ${scale}) translate3d(${x}px, ${y}px, 0) rotateZ(${
+        this.imgAxis.rotate
+      }deg)`,
+    }
+    this.cropExhibitionStyle.img = style
+    return style
+  }
+
   render() {
     return (
       <section
@@ -425,7 +555,21 @@ export default class VueCropper extends Vue {
             <section class="cropper-box-canvas" style={this.imgExhibitionStyle}>
               <img src={this.imgs} alt="vue-cropper" />
             </section>
-            <section class={this.computedClassDrag()} />
+
+            {/* 图片拖拽容器和截图框拖拽生成的，遮罩 */}
+            <section class={this.computedClassDrag()} ref="cropperImg" />
+
+            {/* 截图框展示 */}
+            {this.cropping ? (
+              <section class="cropper-crop-box" style={this.getCropBoxStyle()}>
+                <span class="cropper-view-box">
+                  <img src={this.imgs} style={this.getCropImgStyle()} alt="cropper-img" />
+                </span>
+                <span class="cropper-face cropper-move" ref="cropperBox" />
+              </section>
+            ) : (
+              ''
+            )}
           </section>
         ) : (
           ''

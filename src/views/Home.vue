@@ -52,6 +52,7 @@ export default class Home extends Vue {
 
   option =  {
     img: 'http://cdn.xyxiao.cn/bg1.jpg',
+    // img: 'http://cdn.xyxiao.cn/6FC898F0005903969F7C0487928FA097.png',
     mode: 'contain',
     wrapper: {
       width: '900px',

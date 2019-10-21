@@ -43,3 +43,16 @@ export interface InterfaceAxis {
   x: number
   y: number
 }
+
+export interface InterfaceImgAxis {
+  x: number
+  y: number
+  scale: number
+  rotate: number
+}
+
+export interface InterfaceTransformStyle {
+  width: string
+  height: string
+  transform: string
+}

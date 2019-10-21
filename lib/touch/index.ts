@@ -3,7 +3,7 @@
  */
 
 // 消息通知
-import WatchEvent from '../watchEvent'
+import WatchEvent from '../watchEvents'
 import { InterfaceMessageEvent, InterfaceAxis } from '../interface'
 
 /**
@@ -173,7 +173,7 @@ class TouchEvent {
     }
   }
   // 解绑事件
-  off(type: string, handler: () => void) {
+  off(type: string, handler: (message: InterfaceMessageEvent) => void) {
     this.watcher.removeHandler(type, handler)
     if (type === 'down-to-move') {
       if (SUPPORT_MOUSE) {
