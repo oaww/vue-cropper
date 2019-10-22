@@ -44,9 +44,7 @@ export interface InterfaceAxis {
   y: number
 }
 
-export interface InterfaceImgAxis {
-  x: number
-  y: number
+export interface InterfaceImgAxis extends InterfaceAxis {
   scale: number
   rotate: number
 }

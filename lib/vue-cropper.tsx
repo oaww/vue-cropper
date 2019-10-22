@@ -1,6 +1,14 @@
 import { Component, Prop, Watch, Vue, Emit } from 'vue-property-decorator'
 
-import { loadImg, getExif, resetImg, createImgStyle, translateStyle, loadFile } from './common'
+import {
+  loadImg,
+  getExif,
+  resetImg,
+  createImgStyle,
+  translateStyle,
+  loadFile,
+  getCropImgData,
+} from './common'
 import { supportWheel, changeImgSize } from './changeImgSize'
 
 import './style/index.scss'
@@ -59,8 +67,8 @@ export default class VueCropper extends Vue {
 
   // 截图框的坐标
   cropAxis: InterfaceAxis = {
-    x: 325,
-    y: 150,
+    x: 0,
+    y: 0,
   }
 
   // 截图框的大小
@@ -311,6 +319,10 @@ export default class VueCropper extends Vue {
             this.imgExhibitionStyle = style.imgExhibitionStyle
             this.imgAxis = style.imgAxis
             this.imgs = url
+            // 渲染截图框
+            if (this.cropping) {
+              this.renderCrop()
+            }
             this.isLoading = false
           } else {
             this.imgs = ''
@@ -323,6 +335,26 @@ export default class VueCropper extends Vue {
     } catch (e) {
       console.error(e)
       this.isLoading = false
+    }
+  }
+
+  // 渲染截图框
+  renderCrop(axis?: InterfaceAxis): void {
+    // 如果没有指定截图框的容器位置， 默认截图框为居中布局
+    const { width, height } = this.wrapLayout
+    let cropW = this.cropLayout.width
+    let cropH = this.cropLayout.height
+    cropW = cropW < width ? cropW : width
+    cropH = cropW < height ? cropH : height
+    const defaultAxis: InterfaceAxis = {
+      x: (width - cropW) / 2,
+      y: (height - cropH) / 2,
+    }
+    // 校验截图框位置
+    if (axis) {
+      this.checkedCrop(axis)
+    } else {
+      this.checkedCrop(defaultAxis)
     }
   }
 
@@ -491,6 +523,21 @@ export default class VueCropper extends Vue {
       this.cropBox.off('down-to-move', this.moveCrop)
       this.cropBox = null
     }
+  }
+
+  // 获取截图信息
+  getCropData(type?: string) {
+    // 组合数据
+    const obj = {
+      type: type ? type : 'base64',
+      outputType: this.outputType,
+      url: this.imgs,
+      imgAxis: { ...this.imgAxis },
+      imgLayout: { ...this.imgLayout },
+      cropLayout: { ...this.cropLayout },
+      cropAxis: { ...this.cropAxis },
+    }
+    return getCropImgData(obj)
   }
 
   mounted(): void {

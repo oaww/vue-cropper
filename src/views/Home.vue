@@ -1,6 +1,7 @@
 <template>
   <div class="home">
     <vue-cropper
+      ref="cropper"
       :img="option.img"
       :wrapper="option.wrapper"
       :mode="option.mode"
@@ -11,11 +12,17 @@
       <button class="btn" @click="randomImg">切换图片</button>
       <section>
         <label class="btn" for="uploads">上传图片</label>
-        <input type="file" ref="uploads" id="uploads" style="position:absolute; clip:rect(0 0 0 0);" accept="image/png, image/jpeg, image/gif, image/jpg" @change="uploadImg($event, 1)">
+        <input type="file" ref="uploads" id="uploads" style="position:absolute; clip:rect(0 0 0 0);" accept="image/*" @change="uploadImg($event, 1)">
       </section>
-      <button class="btn"  @click="randomFilter">切换滤镜</button>
+      <button class="btn" @click="getCrop">生成截图</button>
       <section class="control-item">
-        <span>图片默认渲染方式</span>
+        <span>滤镜</span>
+        <select v-model="filter">
+          <option v-for="item in filters" :key="item.name" :value="item.value">{{ item.name }}</option>
+        </select>
+      </section>
+      <section class="control-item">
+        <span>图片渲染方式</span>
         <select v-model="option.mode">
           <option value="contain">contain</option>
           <option value="cover">cover</option>
@@ -23,9 +30,13 @@
           <option value="auto 400px">auto 400px</option>
           <option value="50%">50%</option>
           <option value="auto 50%">auto 50%</option>
-      </select>
-    </section>
+        </select>
+      </section>
     </div>
+    <section class="pre" v-if="preImg">
+      <span @click="preImg = ''">×</span>
+      <img :src="preImg" alt="">
+    </section>
   </div>
 </template>
 
@@ -47,6 +58,7 @@ export default class Home extends Vue {
 
   $refs!: {
     uploads: HTMLInputElement
+    cropper: any
   }
 
 
@@ -60,17 +72,36 @@ export default class Home extends Vue {
     },
   }
 
+  filters: Array<{
+    name: string
+    value: Filter | null
+  }> =  []
+
 
   filter: Filter | null = null
 
-  randomFilter() {
+  preImg: string = ''
+
+  createFilters() {
     const filters = [
-      grayscale,
-      oldPhoto,
-      blackAndWhite,
-      null
+      {
+        name: '无',
+        value: null
+      },
+      {
+        name: '灰度图',
+        value: grayscale
+      },
+      {
+        name: '老照片',
+        value: oldPhoto
+      },
+      {
+        name: '黑白',
+        value: blackAndWhite
+      }
     ]
-    this.filter = filters[~~(Math.random() * filters.length)] || null
+    this.filters = filters
   }
 
   randomImg() {
@@ -78,45 +109,56 @@ export default class Home extends Vue {
     this.option.img = `http://cdn.xyxiao.cn/bg${num}.jpg`
   }
 
-   uploadImg(e: Event) {
-      // 上传图片
-      // this.option.img
-      const target = e.target as HTMLInputElement
-      const file: File = (target.files as FileList)[0]
-      if (!/\.(gif|jpg|jpeg|png|bmp|GIF|JPG|PNG)$/.test(target.value)) {
-        alert('图片类型必须是.gif,jpeg,jpg,png,bmp中的一种')
-        return false
-      }
-      const reader = new FileReader()
-      reader.onload = (event: Event) => {
-        let data
-        const targetTwo = event.target as FileReader
-        if (typeof targetTwo.result === 'object' && targetTwo.result) {
-          // 把Array Buffer转化为blob 如果是base64不需要
-          data = window.URL.createObjectURL(new Blob([targetTwo.result]))
-        } else {
-          data = targetTwo.result
-        }
-        if (data) {
-          this.option.img = data
-        }
-        this.$refs.uploads.value = ''
-      }
-      // 转化为base64
-      // reader.readAsDataURL(file)
-      // 转化为blob
-      reader.readAsArrayBuffer(file)
+  uploadImg(e: Event) {
+    // 上传图片
+    // this.option.img
+    const target = e.target as HTMLInputElement
+    const file: File = (target.files as FileList)[0]
+    if (!/\.(gif|jpg|jpeg|png|bmp|GIF|JPG|PNG)$/.test(target.value)) {
+      alert('图片类型必须是.gif,jpeg,jpg,png,bmp中的一种')
+      return false
     }
+    const reader = new FileReader()
+    reader.onload = (event: Event) => {
+      let data
+      const targetTwo = event.target as FileReader
+      if (typeof targetTwo.result === 'object' && targetTwo.result) {
+        // 把Array Buffer转化为blob 如果是base64不需要
+        data = window.URL.createObjectURL(new Blob([targetTwo.result]))
+      } else {
+        data = targetTwo.result
+      }
+      if (data) {
+        this.option.img = data
+      }
+      this.$refs.uploads.value = ''
+    }
+    reader.readAsArrayBuffer(file)
+  }
 
-    imgUpload(url: string) {
-      this.option.img = url
-    }
+  imgUpload(url: string) {
+    this.option.img = url
+  }
+
+  getCrop() {
+    const cropper = this.$refs.cropper
+    cropper.getCropData().then((res: string ) => {
+      this.preImg = res
+    }).catch((e: Error) => {
+      console.log(e)
+    })
+  }
+
+  mounted() {
+    this.createFilters()
+  }
 
 }
 </script>
 
 <style lang="scss">
   .home {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -142,6 +184,7 @@ export default class Home extends Vue {
       display: flex;
       height: 50px;
       align-items: center;
+      margin-left: 15px;
     }
 
     .btn {
@@ -165,6 +208,33 @@ export default class Home extends Vue {
       transition: all 0.2s ease;
       text-decoration: none;
       user-select: none;
+    }
+  }
+
+  .pre {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+
+    img {
+      max-width: 80%;
+      max-height: 80%
+    }
+
+    span {
+      position: absolute;
+      top: 40px;
+      right: 40px;
+      font-size: 50px;
+      color: white;
+      cursor: pointer;
     }
   }
 </style>

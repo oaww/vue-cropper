@@ -30,6 +30,11 @@ $primary: #1890ff;
     max-width: none;
     max-height: none;
   }
+
+  .cropper-drag-box {
+    transition: background 0.2s ease-in-out;
+  }
+
   .cropper-box {
     overflow: hidden;
   }

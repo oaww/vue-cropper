@@ -117,3 +117,35 @@ export const loadFile = async (file: File): Promise<any> => {
     reader.readAsArrayBuffer(file)
   })
 }
+
+export const getCropImgData = async (options: any): Promise<string> => {
+  const { url, imgLayout, imgAxis, cropAxis, cropLayout, outputType } = options
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+  // 加载图片
+  let img: HTMLImageElement
+  try {
+    img = await loadImg(url)
+  } catch (e) {
+    console.log(e)
+    img = new Image()
+  }
+  return new Promise((resolve, reject) => {
+    try {
+      // 计算绘制图片的偏移
+      const dx = imgAxis.x - cropAxis.x
+      // 图片y轴偏移
+      const dy = imgAxis.y - cropAxis.y
+      canvas.width = cropLayout.width
+      canvas.height = cropLayout.height
+      // console.log(img, dx, dy, imgLayout.width * imgAxis.scale, imgLayout.height * imgAxis.scale)
+      // 绘制图片
+      ctx.drawImage(img, dx, dy, imgLayout.width * imgAxis.scale, imgLayout.height * imgAxis.scale)
+      // 输出图片
+      const res = canvas.toDataURL(`image/${outputType}`, 1)
+      resolve(res)
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
