@@ -596,11 +596,10 @@ export default class VueCropper extends Vue {
     const scale = this.imgAxis.scale
     // 图片放大所带来的扩张坐标补充  加   图片坐标和截图坐标的差值
     const x =
-      ((scale - 1) * this.imgLayout.width) / (2 * scale) +
-      (this.imgAxis.x - this.cropAxis.x) / scale
+      ((this.imgLayout.width * (scale - 1)) / 2 + (this.imgAxis.x - this.cropAxis.x)) / scale
+
     const y =
-      ((scale - 1) * this.imgLayout.height) / (2 * scale) +
-      (this.imgAxis.y - this.cropAxis.y) / scale
+      ((this.imgLayout.height * (scale - 1)) / 2 + (this.imgAxis.y - this.cropAxis.y)) / scale
     // console.log({... this.imgAxis}, '---box')
     const style = {
       width: `${this.imgLayout.width}px`,

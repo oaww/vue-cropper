@@ -69,8 +69,8 @@ export const translateStyle = (style: InterfaceRenderImgLayout, axis?: Interface
   // 通过坐标轴 计算图片的布局， 默认不旋转的计算
   // const left = x / scale
   // const top = y / scale
-  const left = (curStyle.width - imgStyle.width) / (2 * scale) + x / scale
-  const top = (curStyle.height - imgStyle.height) / (2 * scale) + y / scale
+  const left = ((curStyle.width - imgStyle.width) / 2 + x) / scale
+  const top = ((curStyle.height - imgStyle.height) / 2 + y) / scale
 
   // console.log(imgStyle, layoutStyle, curStyle, left, top, 'x--y-', x, y)
   // 角度
