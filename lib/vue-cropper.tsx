@@ -120,7 +120,7 @@ export default class VueCropper extends Vue {
   })
   wrapper!: InterfaceLayout
 
-  // 截图框主题色
+  // 主题色
   @Prop({ default: '#fff' })
   readonly color!: string
 
@@ -145,6 +145,9 @@ export default class VueCropper extends Vue {
   // 截图框的颜色
   @Prop({ default: '#fff' })
   readonly cropColor!: string
+
+  @Prop({ default: 0 })
+  readonly defaultRotate!: number
 
   @Watch('img')
   onImgChanged(val: string) {
@@ -186,6 +189,11 @@ export default class VueCropper extends Vue {
   @Watch('mode')
   onModeChanged() {
     this.checkedImg(this.img)
+  }
+
+  @Watch('defaultRotate')
+  onDefaultRotateChange(val: number) {
+    this.setRotate(val)
   }
 
   // 消息通知
@@ -315,6 +323,7 @@ export default class VueCropper extends Vue {
               scale,
               imgStyle: { ...this.imgLayout },
               layoutStyle: { ...this.wrapLayout },
+              rotate: this.defaultRotate,
             })
             this.imgExhibitionStyle = style.imgExhibitionStyle
             this.imgAxis = style.imgAxis
@@ -409,6 +418,7 @@ export default class VueCropper extends Vue {
           scale: this.imgAxis.scale,
           imgStyle: { ...this.imgLayout },
           layoutStyle: { ...this.wrapLayout },
+          rotate: this.imgAxis.rotate,
         },
         axis,
       )
@@ -489,6 +499,7 @@ export default class VueCropper extends Vue {
         scale,
         imgStyle: { ...this.imgLayout },
         layoutStyle: { ...this.wrapLayout },
+        rotate: this.imgAxis.rotate,
       },
       axis,
     )
@@ -525,6 +536,23 @@ export default class VueCropper extends Vue {
     }
   }
 
+  // 设置旋转角度
+  setRotate(rotate: number) {
+    const { x, y, scale } = this.imgAxis
+    const axis = { x, y }
+    const style = translateStyle(
+      {
+        scale,
+        imgStyle: { ...this.imgLayout },
+        layoutStyle: { ...this.wrapLayout },
+        rotate,
+      },
+      axis,
+    )
+    this.imgExhibitionStyle = style.imgExhibitionStyle
+    this.imgAxis = style.imgAxis
+  }
+
   // 获取截图信息
   getCropData(type?: string) {
     // 组合数据
@@ -536,6 +564,7 @@ export default class VueCropper extends Vue {
       imgLayout: { ...this.imgLayout },
       cropLayout: { ...this.cropLayout },
       cropAxis: { ...this.cropAxis },
+      cropping: this.cropping,
     }
     return getCropImgData(obj)
   }
@@ -604,9 +633,7 @@ export default class VueCropper extends Vue {
     const style = {
       width: `${this.imgLayout.width}px`,
       height: `${this.imgLayout.height}px`,
-      transform: `scale(${scale}, ${scale}) translate3d(${x}px, ${y}px, 0) rotateZ(${
-        this.imgAxis.rotate
-      }deg)`,
+      transform: `scale(${scale}, ${scale}) translate3d(${x}px, ${y}px, 0) rotateZ(${this.imgAxis.rotate}deg)`,
     }
     this.cropExhibitionStyle.img = style
     return style
@@ -624,7 +651,7 @@ export default class VueCropper extends Vue {
         {this.imgs ? (
           <section class="cropper-box">
             {/* 图片展示框 */}
-            <section class="cropper-box-canvas" style={this.imgExhibitionStyle}>
+            <section class="cropper-box-canvas fade-in" style={this.imgExhibitionStyle}>
               <img src={this.imgs} alt="vue-cropper" />
             </section>
 
@@ -633,7 +660,7 @@ export default class VueCropper extends Vue {
 
             {/* 截图框展示 */}
             {this.cropping ? (
-              <section class="cropper-crop-box" style={this.getCropBoxStyle()}>
+              <section class="cropper-crop-box fade-in" style={this.getCropBoxStyle()}>
                 <span class="cropper-view-box">
                   <img src={this.imgs} style={this.getCropImgStyle()} alt="cropper-img" />
                 </span>

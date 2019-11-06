@@ -29,6 +29,7 @@ export interface InterfaceModeHandle {
 
 export interface InterfaceRenderImgLayout {
   scale: number
+  rotate: number
   imgStyle: InterfaceLayoutStyle
   layoutStyle: InterfaceLayoutStyle
 }

@@ -52,7 +52,7 @@ export const createImgStyle = (
 }
 
 export const translateStyle = (style: InterfaceRenderImgLayout, axis?: InterfaceAxis): any => {
-  const { scale, imgStyle, layoutStyle } = style
+  const { scale, imgStyle, layoutStyle, rotate } = style
   const curStyle = {
     width: scale * imgStyle.width,
     height: scale * imgStyle.height,
@@ -73,8 +73,6 @@ export const translateStyle = (style: InterfaceRenderImgLayout, axis?: Interface
   const top = ((curStyle.height - imgStyle.height) / 2 + y) / scale
 
   // console.log(imgStyle, layoutStyle, curStyle, left, top, 'x--y-', x, y)
-  // 角度
-  const rotate = 0
   return {
     imgExhibitionStyle: {
       width: `${imgStyle.width}px`,
@@ -119,7 +117,7 @@ export const loadFile = async (file: File): Promise<any> => {
 }
 
 export const getCropImgData = async (options: any): Promise<string> => {
-  const { url, imgLayout, imgAxis, cropAxis, cropLayout, outputType } = options
+  const { url, imgLayout, imgAxis, cropAxis, cropLayout, outputType, cropping } = options
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
   // 加载图片
@@ -133,14 +131,39 @@ export const getCropImgData = async (options: any): Promise<string> => {
   return new Promise((resolve, reject) => {
     try {
       // 计算绘制图片的偏移
-      const dx = imgAxis.x - cropAxis.x
+      let dx = imgAxis.x - cropAxis.x
       // 图片y轴偏移
-      const dy = imgAxis.y - cropAxis.y
-      canvas.width = cropLayout.width
-      canvas.height = cropLayout.height
+      let dy = imgAxis.y - cropAxis.y
+      let width = cropLayout.width
+      let height = cropLayout.height
+      // 没有截图框状态
+      if (cropLayout.width === 0 || cropLayout.height === 0 || !cropping) {
+        width = imgLayout.width * imgAxis.scale
+        height = imgLayout.height * imgAxis.scale
+        dx = 0
+        dy = 0
+      }
+      canvas.width = width
+      canvas.height = height
+      console.log(width, height)
       // console.log(img, dx, dy, imgLayout.width * imgAxis.scale, imgLayout.height * imgAxis.scale)
+      ctx.save()
+      // 如果图片有角度
+      if (imgAxis.rotate !== 0) {
+        console.log(`对图片的角度进行处理, 角度为${imgAxis.rotate}`)
+        ctx.translate(width / 2, height / 2)
+        ctx.rotate((imgAxis.rotate * Math.PI) / 180)
+        dx -= width / 2
+        dy -= height / 2
+      }
+      console.log(dx, dy, width, height)
+      // 图片平滑度 low|medium|high
+      // ctx.imageSmoothingEnabled = true
+      // ctx.imageSmoothingQuality = 'hight'
+
       // 绘制图片
       ctx.drawImage(img, dx, dy, imgLayout.width * imgAxis.scale, imgLayout.height * imgAxis.scale)
+      ctx.restore()
       // 输出图片
       const res = canvas.toDataURL(`image/${outputType}`, 1)
       resolve(res)

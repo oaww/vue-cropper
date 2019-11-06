@@ -6,6 +6,7 @@
       :wrapper="option.wrapper"
       :mode="option.mode"
       :filter="filter"
+      :defaultRotate="option.rotate"
       @img-upload="imgUpload"
     ></vue-cropper>
     <div class="control">
@@ -32,6 +33,13 @@
           <option value="auto 50%">auto 50%</option>
         </select>
       </section>
+
+      <section class="control-item line">
+        <span>图片角度</span>
+         <section class="slider">
+           <vue-slider v-model="option.rotate" tooltip="always" :min="0" :max="360"></vue-slider>
+         </section>
+      </section>
     </div>
     <section class="pre" v-if="preImg">
       <span @click="preImg = ''">×</span>
@@ -44,6 +52,8 @@
 import { Component, Vue } from 'vue-property-decorator'
 import { VueCropper } from '../../lib/index'
 import { grayscale, oldPhoto, blackAndWhite } from '../../lib/filter'
+import VueSlider from 'vue-slider-component'
+import 'vue-slider-component/theme/default.css'
 
 type Filter = (canvas: HTMLCanvasElement) => HTMLCanvasElement
 
@@ -51,6 +61,7 @@ type Filter = (canvas: HTMLCanvasElement) => HTMLCanvasElement
 @Component({
   components: {
     VueCropper,
+    VueSlider
   },
 })
 
@@ -70,6 +81,7 @@ export default class Home extends Vue {
       width: '900px',
       height: '500px',
     },
+    rotate: 45,
   }
 
   filters: Array<{
@@ -199,6 +211,7 @@ export default class Home extends Vue {
     padding-top: 20px;
     text-align: center;
     align-items: center;
+    flex-wrap: wrap;
 
     button {
       margin-right: 20px;
@@ -209,6 +222,11 @@ export default class Home extends Vue {
       height: 50px;
       align-items: center;
       margin-left: 15px;
+    }
+
+    .slider {
+      margin-left: 40px;
+      width: 300px;
     }
 
     .btn {
@@ -245,6 +263,7 @@ export default class Home extends Vue {
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 2019;
 
 
     img {

@@ -103,11 +103,27 @@ $primary: #1890ff;
       }
     }
   }
+
+  .fade-in {
+    animation-name: fadeIn;
+    animation-duration: 0.75s;
+  }
 }
 
 // 动画
 @keyframes loadingCircle {
   100% {
     transform: rotate(360deg);
+  }
+}
+
+// fadeIn
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }

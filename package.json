@@ -1,6 +1,6 @@
 {
-  "name": "vue-cropper-next",
-  "version": "0.1.0",
+  "name": "vue-cropper",
+  "version": "1.0.0-beta.1",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -23,7 +23,8 @@
     "vue": "^2.6.6",
     "vue-class-component": "^6.0.0",
     "vue-property-decorator": "^7.0.0",
-    "vue-router": "^3.0.1"
+    "vue-router": "^3.0.1",
+    "vue-slider-component": "^3.0.42"
   },
   "devDependencies": {
     "@types/chai": "^4.1.0",
