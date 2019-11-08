@@ -145,18 +145,73 @@ export const getCropImgData = async (options: any): Promise<string> => {
       }
       canvas.width = width
       canvas.height = height
-      console.log(width, height)
+
+      // 是否填充背景颜色
+      const fillColor = '#fff'
+      ctx.fillStyle = fillColor
+      ctx.fillRect(0, 0, width, height)
+
+      // console.log(width, height)
       // console.log(img, dx, dy, imgLayout.width * imgAxis.scale, imgLayout.height * imgAxis.scale)
       ctx.save()
       // 如果图片有角度
       if (imgAxis.rotate !== 0) {
+        // 旋转的中心坐标, 实际上图片是绕自己的中心点去旋转的
+        const tx = width / 2
+        const ty = height / 2
+        // 旋转的中心坐标,原点的
+
+        // const tx = (imgAxis.x + imgLayout.width * imgAxis.scale / 2 + cropAxis.x + width / 2) / 2
+        // const ty = (imgAxis.y+ imgLayout.height * imgAxis.scale / 2 + cropAxis.y + height / 2) / 2
+
         console.log(`对图片的角度进行处理, 角度为${imgAxis.rotate}`)
-        ctx.translate(width / 2, height / 2)
+        ctx.translate(tx, ty)
         ctx.rotate((imgAxis.rotate * Math.PI) / 180)
-        dx -= width / 2
-        dy -= height / 2
+        // 坐标轴的计算
+        // 初始的图片坐标
+        const ix = imgAxis.x
+        const iy = imgAxis.y
+        // 初始截图框坐标
+        const cx = cropAxis.x
+        const cy = cropAxis.y
+        console.log(
+          `处理之前的坐标轴: 旋转中心(${tx}, ${ty}), 图片坐标(${ix}, ${iy}), 截图框坐标(${cx}, ${cy})`,
+        )
+        /*
+        计算坐标轴， 转化为极坐标方程
+        ix = r * cosθ  iy = r * cosθ
+        坐标（ix,iy)到（tx,ty)距离为r；则以（tx,ty)为圆心r为半径做圆，可知旋转θ角度后的x，y都在圆上
+        点（ix, iy)对应圆方程为：
+        ix - tx = r * cosθ1  ;   iy - ty = r * sinθ1  (注意这里圆心为（tx,ty)）
+        变化后的点（x，y）对应圆方程为：
+        x - tx = r * cos(θ1+ θ) = r * cosθ1 * cosθ -r * sinθ1 * sinθ =  (ix - tx) * cosθ - (iy - ty) * sinθ
+        y - ty = r * sin(θ2 + θ) = r * sinθ1 * cosθ + r * cosθ1 * sinθ = (iy - ty) * cosθ + (ix - tx) * sinθ
+        */
+        const angel = (imgAxis.rotate * Math.PI) / 180
+        // const newImgAxis: InterfaceAxis = {
+        //   x: (ix - tx) * Math.cos(angel) - (iy - ty) * Math.sin(angel) + tx,
+        //   y: (iy - ty) * Math.cos(angel) + (ix - tx) * Math.sin(angel) + ty
+        // }
+
+        // const newCropAxis: InterfaceAxis = {
+        //   x: (cx - tx) * Math.cos(angel) - (cy - ty) * Math.sin(angel) + tx,
+        //   y: (cy - ty) * Math.cos(angel) + (cx - tx) * Math.sin(angel) + ty
+        // }
+        // console.log(`处理之后的坐标轴: 图片坐标(${newImgAxis.x}, ${newImgAxis.y}), 截图框坐标(${newCropAxis.x}, ${newCropAxis.y})`)
+        // const ndx = newImgAxis.x - newCropAxis.x
+        // const ndy = newImgAxis.y - newCropAxis.y
+
+        const ndx = (dx - tx) * Math.cos(angel) - (dy - ty) * Math.sin(angel) + tx
+        const ndy = (dy - ty) * Math.cos(angel) + (dx - tx) * Math.sin(angel) + ty
+        dx -= tx
+        dy -= ty
+        console.log(
+          `正确的 dx ${dx}, 旋转轴计算的 dx ${ndx}, 正确的 dy ${dy}, 旋转轴计算的 dy ${ndy}`,
+        )
+
+        // dx = ndx
+        // dy = ndy
       }
-      console.log(dx, dy, width, height)
       // 图片平滑度 low|medium|high
       // ctx.imageSmoothingEnabled = true
       // ctx.imageSmoothingQuality = 'hight'
