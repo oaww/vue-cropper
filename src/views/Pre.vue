@@ -2,16 +2,32 @@
   <section class="pre-vue">
     <canvas ref="pre"></canvas>
     <canvas ref="pre2"></canvas>
+    <section class="slider">
+      <vue-slider v-model="rotate" tooltip="always" :min="0" :max="360"></vue-slider>
+    </section>
   </section>
 </template>
 
 <script>
 import { loadImg } from '../../lib/common'
+import VueSlider from 'vue-slider-component'
+
 export default {
   data() {
     return {
-      url: 'http://cdn.xyxiao.cn/bg1.jpg'
+      url: 'http://cdn.xyxiao.cn/bg3.jpg',
+      rotate: 0,
+      set: '',
+      finish: true
     }
+  },
+  watch: {
+    rotate() {
+      this.showPre2()
+    }
+  },
+  components: {
+    VueSlider
   },
   methods: {
     async showPre() {
@@ -40,11 +56,11 @@ export default {
         height: 500
       }
 
-      let dx = imgAxis.x - cropAxis.x
+      const dx = imgAxis.x - cropAxis.x
       // 图片y轴偏移
-      let dy = imgAxis.y - cropAxis.y
-      let width = cropLayout.width
-      let height = cropLayout.height
+      const dy = imgAxis.y - cropAxis.y
+      const width = cropLayout.width
+      const height = cropLayout.height
 
       canvas.width = width
       canvas.height = height
@@ -56,52 +72,50 @@ export default {
       const img = await loadImg(this.url)
       const canvas = this.$refs.pre2
       const ctx = canvas.getContext('2d')
+      const rotate = this.rotate
+      const scale = 0.25
       const imgLayout = {
         width: img.width,
         height: img.height
       }
 
-      const imgAxis = {
-        x: 100,
-        y: 100,
-        scale: 1,
-        rotate: 45
-      }
+      const width = imgLayout.width * scale
+      const height = imgLayout.height * scale
 
-      const cropAxis = {
-        x: 200,
-        y: 200,
-      }
+      // 补充超过容器的位置
+      const max = Math.ceil(Math.sqrt(width * width + height * height))
 
-      const cropLayout = {
-        width: 500,
-        height: 500
-      }
+      canvas.width = max
+      canvas.height = max
 
-      let dx = imgAxis.x - cropAxis.x
-      // 图片y轴偏移
-      let dy = imgAxis.y - cropAxis.y
-      let width = cropLayout.width
-      let height = cropLayout.height
+      // ctx.fillStyle = 'transparent'
+      ctx.fillStyle = '#eee'
+      ctx.fillRect(0, 0, max, max)
+      ctx.translate(max / 2, max / 2)
+      ctx.rotate(rotate * Math.PI / 180)
+      ctx.imageSmoothingEnabled = true
 
-      canvas.width = width
-      canvas.height = height
-
-      const tx = width / 2
-      const ty = height / 2
-
-      ctx.translate(tx, ty)
-      ctx.rotate(imgAxis.rotate * Math.PI / 180)
-
-      dx -= tx
-      dy -= ty
-
-      ctx.drawImage(img, dx, dy, imgLayout.width, imgLayout.height)
+      const dx = - max / 2 + (max - width) / 2
+      const dy = - max / 2 + (max - height) / 2
+      ctx.drawImage(img, dx, dy, width, height)
+      ctx.restore()
+      this.finish = true
     }
   },
   mounted() {
-    this.showPre()
+    // this.showPre()
     this.showPre2()
+    // this.set = setInterval(() => {
+    //   if (!this.finish) return
+    //   this.finish = false
+    //   let rotate = this.rotate
+    //   rotate++
+    //   rotate = rotate < 360 ? rotate : rotate - 360
+    //   this.rotate = rotate
+    // }, 1000 / 60)
+  },
+  destroyed() {
+    // clearInterval(this.set)
   }
 }
 </script>

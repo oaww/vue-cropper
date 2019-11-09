@@ -116,6 +116,50 @@ export const loadFile = async (file: File): Promise<any> => {
   })
 }
 
+/**
+ * 获取绘制了图片的 canvas, 不旋转为图片大小， 旋转则为 Math.sqrt(width * width + height * height)
+ * @param { image, imgLayout, rotate, scale }
+ * @return { HTMLCanvasElement }
+ */
+export const getImgCanvas = (
+  img: HTMLImageElement,
+  imgLayout: InterfaceLayoutStyle,
+  rotate: number = 0,
+  scale: number = 1,
+): HTMLCanvasElement => {
+  // 图片放在外部加载 这里不处理图片加载
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+
+  let { width, height } = imgLayout
+  let dx = 0
+  let dy = 0
+  let max = 0
+
+  width = width * scale
+  height = height * scale
+
+  canvas.width = width
+  canvas.height = height
+
+  if (rotate) {
+    // 表示存在角度
+    max = Math.ceil(Math.sqrt(width * width + height * height))
+    canvas.width = max
+    canvas.height = max
+    ctx.translate(max / 2, max / 2)
+    ctx.rotate((rotate * Math.PI) / 180)
+    dx = -max / 2 + (max - width) / 2
+    dy = -max / 2 + (max - height) / 2
+  }
+
+  ctx.drawImage(img, dx, dy, width, height)
+  ctx.restore()
+  // console.log(canvas, dx, dy)
+  // document.body.append(canvas)
+  return canvas
+}
+
 export const getCropImgData = async (options: any): Promise<string> => {
   const { url, imgLayout, imgAxis, cropAxis, cropLayout, outputType, cropping } = options
   const canvas = document.createElement('canvas')
@@ -130,94 +174,39 @@ export const getCropImgData = async (options: any): Promise<string> => {
   }
   return new Promise((resolve, reject) => {
     try {
+      // 从这里开始对图片进行处理
+      const imgCanvas = getImgCanvas(img, imgLayout, imgAxis.rotate, imgAxis.scale)
       // 计算绘制图片的偏移
       let dx = imgAxis.x - cropAxis.x
       // 图片y轴偏移
       let dy = imgAxis.y - cropAxis.y
       let width = cropLayout.width
       let height = cropLayout.height
-      // 没有截图框状态
-      if (cropLayout.width === 0 || cropLayout.height === 0 || !cropping) {
-        width = imgLayout.width * imgAxis.scale
-        height = imgLayout.height * imgAxis.scale
+
+      if (!cropping) {
+        // 没有截图框
+        width = imgCanvas.width
+        height = imgCanvas.height
         dx = 0
         dy = 0
       }
+
+      if (imgAxis.rotate && cropping) {
+        // 表示有旋转 同时是截图, 因为 canvas 是放大了的 ，那么 x 轴和  y 轴需要偏移
+        dx -= (imgCanvas.width - imgLayout.width * imgAxis.scale) / 2
+        dy -= (imgCanvas.height - imgLayout.height * imgAxis.scale) / 2
+      }
+
       canvas.width = width
       canvas.height = height
 
-      // 是否填充背景颜色
-      const fillColor = '#fff'
+      // 是否填充背景颜色 transparent
+      const fillColor = 'transparent'
       ctx.fillStyle = fillColor
       ctx.fillRect(0, 0, width, height)
 
-      // console.log(width, height)
-      // console.log(img, dx, dy, imgLayout.width * imgAxis.scale, imgLayout.height * imgAxis.scale)
-      ctx.save()
-      // 如果图片有角度
-      if (imgAxis.rotate !== 0) {
-        // 旋转的中心坐标, 实际上图片是绕自己的中心点去旋转的
-        const tx = width / 2
-        const ty = height / 2
-        // 旋转的中心坐标,原点的
-
-        // const tx = (imgAxis.x + imgLayout.width * imgAxis.scale / 2 + cropAxis.x + width / 2) / 2
-        // const ty = (imgAxis.y+ imgLayout.height * imgAxis.scale / 2 + cropAxis.y + height / 2) / 2
-
-        console.log(`对图片的角度进行处理, 角度为${imgAxis.rotate}`)
-        ctx.translate(tx, ty)
-        ctx.rotate((imgAxis.rotate * Math.PI) / 180)
-        // 坐标轴的计算
-        // 初始的图片坐标
-        const ix = imgAxis.x
-        const iy = imgAxis.y
-        // 初始截图框坐标
-        const cx = cropAxis.x
-        const cy = cropAxis.y
-        console.log(
-          `处理之前的坐标轴: 旋转中心(${tx}, ${ty}), 图片坐标(${ix}, ${iy}), 截图框坐标(${cx}, ${cy})`,
-        )
-        /*
-        计算坐标轴， 转化为极坐标方程
-        ix = r * cosθ  iy = r * cosθ
-        坐标（ix,iy)到（tx,ty)距离为r；则以（tx,ty)为圆心r为半径做圆，可知旋转θ角度后的x，y都在圆上
-        点（ix, iy)对应圆方程为：
-        ix - tx = r * cosθ1  ;   iy - ty = r * sinθ1  (注意这里圆心为（tx,ty)）
-        变化后的点（x，y）对应圆方程为：
-        x - tx = r * cos(θ1+ θ) = r * cosθ1 * cosθ -r * sinθ1 * sinθ =  (ix - tx) * cosθ - (iy - ty) * sinθ
-        y - ty = r * sin(θ2 + θ) = r * sinθ1 * cosθ + r * cosθ1 * sinθ = (iy - ty) * cosθ + (ix - tx) * sinθ
-        */
-        const angel = (imgAxis.rotate * Math.PI) / 180
-        // const newImgAxis: InterfaceAxis = {
-        //   x: (ix - tx) * Math.cos(angel) - (iy - ty) * Math.sin(angel) + tx,
-        //   y: (iy - ty) * Math.cos(angel) + (ix - tx) * Math.sin(angel) + ty
-        // }
-
-        // const newCropAxis: InterfaceAxis = {
-        //   x: (cx - tx) * Math.cos(angel) - (cy - ty) * Math.sin(angel) + tx,
-        //   y: (cy - ty) * Math.cos(angel) + (cx - tx) * Math.sin(angel) + ty
-        // }
-        // console.log(`处理之后的坐标轴: 图片坐标(${newImgAxis.x}, ${newImgAxis.y}), 截图框坐标(${newCropAxis.x}, ${newCropAxis.y})`)
-        // const ndx = newImgAxis.x - newCropAxis.x
-        // const ndy = newImgAxis.y - newCropAxis.y
-
-        const ndx = (dx - tx) * Math.cos(angel) - (dy - ty) * Math.sin(angel) + tx
-        const ndy = (dy - ty) * Math.cos(angel) + (dx - tx) * Math.sin(angel) + ty
-        dx -= tx
-        dy -= ty
-        console.log(
-          `正确的 dx ${dx}, 旋转轴计算的 dx ${ndx}, 正确的 dy ${dy}, 旋转轴计算的 dy ${ndy}`,
-        )
-
-        // dx = ndx
-        // dy = ndy
-      }
-      // 图片平滑度 low|medium|high
-      // ctx.imageSmoothingEnabled = true
-      // ctx.imageSmoothingQuality = 'hight'
-
       // 绘制图片
-      ctx.drawImage(img, dx, dy, imgLayout.width * imgAxis.scale, imgLayout.height * imgAxis.scale)
+      ctx.drawImage(imgCanvas, dx, dy, imgCanvas.width, imgCanvas.height)
       ctx.restore()
       // 输出图片
       const res = canvas.toDataURL(`image/${outputType}`, 1)
