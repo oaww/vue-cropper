@@ -114,8 +114,8 @@ export default class VueCropper extends Vue {
   // 外层容器宽高
   @Prop({
     default: () => ({
-      width: '200px',
-      height: '200px',
+      width: '100%',
+      height: '100%',
     }),
   })
   wrapper!: InterfaceLayout

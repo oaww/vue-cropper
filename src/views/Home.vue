@@ -81,7 +81,7 @@ export default class Home extends Vue {
       width: '900px',
       height: '500px',
     },
-    rotate: 30,
+    rotate: 0,
   }
 
   filters: Array<{
