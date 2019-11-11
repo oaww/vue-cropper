@@ -96,6 +96,18 @@ export default class VueCropper extends Vue {
   // 处于生成了截图的状态
   cropping: boolean = true
 
+  // 当前截图框是否处于动画状态 即回弹状态
+  isCropAnimate: boolean = false
+
+  // 当前图片是否处于动画状态 即回弹状态
+  isImgAnimate: boolean = false
+
+  // 截图框是否已经被拖出出限定的范围， 添加阻力
+  isCropCrossing: boolean = false
+
+  // 图片是否已经被拖出出限定的范围， 添加阻力
+  isImgCrossing: boolean = false
+
   $refs!: {
     canvas: HTMLCanvasElement
     cropper: HTMLElement
@@ -136,6 +148,7 @@ export default class VueCropper extends Vue {
       图片布局方式 mode 实现和css背景一样的效果
       contain  居中布局 默认不会缩放 保证图片在容器里面 mode: 'contain'
       cover    拉伸布局 填充整个容器  mode: 'cover'
+      original 保持图片原始比例不变
       宽度自适应 高度固定  mode: '50px auto'
       宽度固定 高度自适应 mode: 'auto 50px'
   */
@@ -148,6 +161,10 @@ export default class VueCropper extends Vue {
 
   @Prop({ default: 0 })
   readonly defaultRotate!: number
+
+  // 截图框是否应该限制在图片里面
+  @Prop({ default: true })
+  readonly centerBox!: true
 
   @Watch('img')
   onImgChanged(val: string) {
@@ -347,26 +364,6 @@ export default class VueCropper extends Vue {
     }
   }
 
-  // 渲染截图框
-  renderCrop(axis?: InterfaceAxis): void {
-    // 如果没有指定截图框的容器位置， 默认截图框为居中布局
-    const { width, height } = this.wrapLayout
-    let cropW = this.cropLayout.width
-    let cropH = this.cropLayout.height
-    cropW = cropW < width ? cropW : width
-    cropH = cropW < height ? cropH : height
-    const defaultAxis: InterfaceAxis = {
-      x: (width - cropW) / 2,
-      y: (height - cropH) / 2,
-    }
-    // 校验截图框位置
-    if (axis) {
-      this.checkedCrop(axis)
-    } else {
-      this.checkedCrop(defaultAxis)
-    }
-  }
-
   // 渲染图片布局
   async renderImgLayout(url: string): Promise<number> {
     let img: HTMLImageElement
@@ -424,46 +421,7 @@ export default class VueCropper extends Vue {
       )
       this.imgExhibitionStyle = style.imgExhibitionStyle
       this.imgAxis = style.imgAxis
-      // console.log(style)
     }
-  }
-
-  // 移动截图框
-  moveCrop(message: InterfaceMessageEvent) {
-    // 拿到的是变化之后的坐标轴
-    if (message.change) {
-      const axis = {
-        x: message.change.x + this.cropAxis.x,
-        y: message.change.y + this.cropAxis.y,
-      }
-      this.checkedCrop(axis)
-    }
-  }
-
-  // 检查截图框位置
-  checkedCrop(axis: InterfaceAxis) {
-    // 截图了默认不允许超过容器
-    const maxLeft = 0
-    const maxTop = 0
-    const maxRight = this.wrapLayout.width - this.cropLayout.width
-    const maxBottom = this.wrapLayout.height - this.cropLayout.height
-    if (axis.x < maxLeft) {
-      axis.x = maxLeft
-    }
-
-    if (axis.y < maxTop) {
-      axis.y = maxTop
-    }
-
-    if (axis.x > maxRight) {
-      axis.x = maxRight
-    }
-
-    if (axis.y > maxBottom) {
-      axis.y = maxBottom
-    }
-
-    this.cropAxis = axis
   }
 
   // 鼠标移入截图组件
@@ -512,7 +470,11 @@ export default class VueCropper extends Vue {
     this.unbindMoveImg()
     const domImg = this.$refs.cropperImg
     this.cropImg = new TouchEvent(domImg)
+    // 图片拖拽绑定
     this.cropImg.on('down-to-move', this.moveImg)
+    this.cropImg.on('up', () => {
+      console.log('图片拖拽结束, 可以开始校验位置，回弹了')
+    })
   }
 
   unbindMoveImg(): void {
@@ -567,6 +529,76 @@ export default class VueCropper extends Vue {
       cropping: this.cropping,
     }
     return getCropImgData(obj)
+  }
+
+  // 渲染截图框
+  renderCrop(axis?: InterfaceAxis): void {
+    // 如果没有指定截图框的容器位置， 默认截图框为居中布局
+    const { width, height } = this.wrapLayout
+    let cropW = this.cropLayout.width
+    let cropH = this.cropLayout.height
+    cropW = cropW < width ? cropW : width
+    cropH = cropW < height ? cropH : height
+    const defaultAxis: InterfaceAxis = {
+      x: (width - cropW) / 2,
+      y: (height - cropH) / 2,
+    }
+    // 校验截图框位置
+    if (axis) {
+      this.checkedCrop(axis)
+    } else {
+      this.checkedCrop(defaultAxis)
+    }
+  }
+
+  // 移动截图框
+  moveCrop(message: InterfaceMessageEvent) {
+    // 拿到的是变化之后的坐标轴
+    if (message.change) {
+      const axis = {
+        x: message.change.x + this.cropAxis.x,
+        y: message.change.y + this.cropAxis.y,
+      }
+      this.checkedCrop(axis)
+    }
+  }
+
+  // 检查截图框位置
+  checkedCrop(axis: InterfaceAxis) {
+    // 截图了默认不允许超过容器
+    const maxLeft = 0
+    const maxTop = 0
+    const maxRight = this.wrapLayout.width - this.cropLayout.width
+    const maxBottom = this.wrapLayout.height - this.cropLayout.height
+    if (axis.x < maxLeft) {
+      axis.x = maxLeft
+    }
+
+    if (axis.y < maxTop) {
+      axis.y = maxTop
+    }
+
+    if (axis.x > maxRight) {
+      axis.x = maxRight
+    }
+
+    if (axis.y > maxBottom) {
+      axis.y = maxBottom
+    }
+
+    this.cropAxis = axis
+    this.cropping = true
+  }
+
+  // 回弹截图框, 如果校验不通过那么截图框需要在指定时间弹回正常的位置
+
+  // 清除截图框
+  clearCrop() {
+    this.cropAxis = {
+      x: 0,
+      y: 0,
+    }
+    this.cropping = false
   }
 
   mounted(): void {

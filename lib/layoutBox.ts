@@ -64,6 +64,10 @@ const modeHandle = {
     mode: string,
   ): number => {
     let scale = 1
+    // 原始图片比例渲染
+    if (mode === 'original') {
+      return scale
+    }
     let { width, height } = { ...imgStyle }
     const wrapWidth = layoutStyle.width
     const wrapHeight = layoutStyle.height

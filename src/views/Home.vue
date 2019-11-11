@@ -31,6 +31,7 @@
           <option value="auto 400px">auto 400px</option>
           <option value="50%">50%</option>
           <option value="auto 50%">auto 50%</option>
+          <option value="original">original</option>
         </select>
       </section>
 
@@ -40,6 +41,10 @@
            <vue-slider v-model="option.rotate" tooltip="always" :min="0" :max="360"></vue-slider>
          </section>
       </section>
+    </div>
+    <div class="control">
+      <button class="btn" @click="() => this.$refs.cropper.renderCrop()">生成截图框</button>
+      <button class="btn" @click="() => this.$refs.cropper.clearCrop()">清除截图框</button>
     </div>
     <section class="pre" v-if="preImg">
       <span @click="preImg = ''">×</span>
@@ -198,7 +203,7 @@ export default class Home extends Vue {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     padding-top: 50px;
     background-color: #c0ccda;
     min-height: 100vh;

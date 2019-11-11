@@ -143,6 +143,7 @@ export const getImgCanvas = (
   canvas.height = height
 
   if (rotate) {
+    // 坐标  nx = (x - cx) * cos A - (y - cy) * sinA   ny = (y - cy) * cosA + (x - cx) * sinA
     // 表示存在角度
     max = Math.ceil(Math.sqrt(width * width + height * height))
     canvas.width = max
