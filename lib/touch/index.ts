@@ -27,7 +27,7 @@ import { InterfaceMessageEvent, InterfaceAxis } from '../interface'
  *    内积  r = (v1.x * v2.x + v1.y * v2.y ) / getLen(v1) * getLen(v2)
  *         r = r > 1 ? 1 : r
  *         angel = Math.acos(r);
- *    差乘  crosss = v1.x * v2.y - v2.x * v1.y
+ *    差乘  cross = v1.x * v2.y - v2.x * v1.y
  *    if  cross > 1  angel *=  -1
  *    angle * 180 / Math.PI
  */

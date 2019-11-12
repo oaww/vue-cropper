@@ -83,7 +83,7 @@ $primary: #1890ff;
     justify-content: center;
     color: $primary;
 
-    .loading-spin {
+    .cropper-loading-spin {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -98,27 +98,27 @@ $primary: #1890ff;
 
       i {
         svg {
-          animation: loadingCircle 1s infinite linear;
+          animation: cropperLoadingCircle 1s infinite linear;
         }
       }
     }
   }
 
-  .fade-in {
-    animation-name: fadeIn;
+  .cropper-fade-in {
+    animation-name: cropperFadeIn;
     animation-duration: 0.75s;
   }
 }
 
-// 动画
-@keyframes loadingCircle {
+// 旋转动画
+@keyframes cropperLoadingCircle {
   100% {
     transform: rotate(360deg);
   }
 }
 
-// fadeIn
-@keyframes fadeIn {
+//  淡入淡出动画
+@keyframes cropperFadeIn {
   from {
     opacity: 0;
   }

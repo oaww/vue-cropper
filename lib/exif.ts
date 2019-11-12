@@ -1,12 +1,12 @@
 const Exif: any = {}
 Exif.getData = (img: HTMLImageElement) =>
-  new Promise((reslove, reject) => {
+  new Promise((resolve, reject) => {
     let obj: any = {}
     getImageData(img)
       .then((data: any) => {
         obj.arrayBuffer = data
         obj.orientation = getOrientation(data)
-        reslove(obj)
+        resolve(obj)
       })
       .catch(error => {
         reject(error)
@@ -18,18 +18,18 @@ Exif.getData = (img: HTMLImageElement) =>
 // base64转ArrayBuffer对象
 function getImageData(img: HTMLImageElement) {
   let data = null
-  return new Promise((reslove, reject) => {
+  return new Promise((resolve, reject) => {
     if (img.src) {
       if (/^data\:/i.test(img.src)) {
         // Data URI
         data = base64ToArrayBuffer(img.src)
-        reslove(data)
+        resolve(data)
       } else if (/^blob\:/i.test(img.src)) {
         // Object URL
         var fileReader = new FileReader()
         fileReader.onload = function(e: any) {
           data = e.target.result
-          reslove(data)
+          resolve(data)
         }
         objectURLToBlob(img.src, function(blob: Blob) {
           fileReader.readAsArrayBuffer(blob)
@@ -39,7 +39,7 @@ function getImageData(img: HTMLImageElement) {
         http.onload = function() {
           if (this.status == 200 || this.status === 0) {
             data = http.response
-            reslove(data)
+            resolve(data)
           } else {
             throw 'Could not load image'
           }
