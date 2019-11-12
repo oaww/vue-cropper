@@ -1,9 +1,9 @@
 /**
- * WactchEvent 消息通知
+ * WatchEvent 消息通知
  */
 import { InterfaceMessageEvent } from './interface'
 
-class WactchEvent {
+class WatchEvent {
   handlers: Map<string, Array<(message: InterfaceMessageEvent) => void>>
   constructor() {
     this.handlers = new Map()
@@ -47,4 +47,4 @@ class WactchEvent {
   }
 }
 
-export default WactchEvent
+export default WatchEvent

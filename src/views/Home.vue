@@ -38,7 +38,13 @@
       <section class="control-item line">
         <span>图片角度</span>
          <section class="slider">
-           <vue-slider v-model="option.rotate" tooltip="always" :min="0" :max="360"></vue-slider>
+           <vue-slider
+            v-model="option.rotate"
+            tooltip="always"
+            :min="0"
+            :max="360"
+            :rail-style="{ backgroundColor: '#efefef' }"
+          ></vue-slider>
          </section>
       </section>
     </div>

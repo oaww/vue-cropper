@@ -11,7 +11,7 @@ export interface InterfaceLayout {
   backgroundImage?: string
 }
 
-export interface InterfaceImgload {
+export interface InterfaceImgLoad {
   type: string
   message: string
 }

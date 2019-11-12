@@ -15,7 +15,7 @@ import './style/index.scss'
 
 import {
   InterfaceLayout,
-  InterfaceImgload,
+  InterfaceImgLoad,
   InterfaceModeHandle,
   InterfaceMessageEvent,
   InterfaceAxis,
@@ -215,7 +215,7 @@ export default class VueCropper extends Vue {
 
   // 消息通知
   @Emit('img-load')
-  imgLoadEmit(obj: InterfaceImgload): InterfaceImgload {
+  imgLoadEmit(obj: InterfaceImgLoad): InterfaceImgLoad {
     return obj
   }
 
@@ -631,8 +631,8 @@ export default class VueCropper extends Vue {
 
   destroy(): void {
     this.$refs.cropper.removeEventListener('drop', this.drop, false)
-    this.$refs.cropper.removeEventListener('dropover', this.dragover, false)
-    this.$refs.cropper.removeEventListener('dropend', this.dragend, false)
+    this.$refs.cropper.removeEventListener('dragover', this.dragover, false)
+    this.$refs.cropper.removeEventListener('dragend', this.dragend, false)
     this.unbindMoveImg()
     this.unbindMoveCrop()
     console.log('destroy')
@@ -697,7 +697,7 @@ export default class VueCropper extends Vue {
         {this.imgs ? (
           <section class="cropper-box">
             {/* 图片展示框 */}
-            <section class="cropper-box-canvas fade-in" style={this.imgExhibitionStyle}>
+            <section class="cropper-box-canvas cropper-fade-in" style={this.imgExhibitionStyle}>
               <img src={this.imgs} alt="vue-cropper" />
             </section>
 
@@ -706,7 +706,7 @@ export default class VueCropper extends Vue {
 
             {/* 截图框展示 */}
             {this.cropping ? (
-              <section class="cropper-crop-box fade-in" style={this.getCropBoxStyle()}>
+              <section class="cropper-crop-box cropper-fade-in" style={this.getCropBoxStyle()}>
                 <span class="cropper-view-box">
                   <img src={this.imgs} style={this.getCropImgStyle()} alt="cropper-img" />
                 </span>
@@ -723,12 +723,11 @@ export default class VueCropper extends Vue {
         {/* 加载动画 */}
         {this.isLoading ? (
           <section class="cropper-loading">
-            <p class="loading-spin">
+            <p class="cropper-loading-spin">
               <i>
                 <svg
                   viewBox="0 0 1024 1024"
                   focusable="false"
-                  class="anticon-spin"
                   data-icon="loading"
                   width="1.5em"
                   height="1.5em"
