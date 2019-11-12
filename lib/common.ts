@@ -89,6 +89,7 @@ export const translateStyle = (style: InterfaceRenderImgLayout, axis?: Interface
   }
 }
 
+// 加载文件函数
 export const loadFile = async (file: File): Promise<any> => {
   if (!file) {
     return ''
@@ -117,7 +118,8 @@ export const loadFile = async (file: File): Promise<any> => {
 }
 
 /**
- * 获取绘制了图片的 canvas, 不旋转为图片大小， 旋转则为 Math.sqrt(width * width + height * height)
+ * #### 获取绘制了图片的 canvas, 不旋转为图片大小，
+ * #### 旋转则为 Math.sqrt(width * width + height * height)
  * @param { image, imgLayout, rotate, scale }
  * @return { HTMLCanvasElement }
  */
@@ -161,6 +163,10 @@ export const getImgCanvas = (
   return canvas
 }
 
+/**
+ * 生成最终截图函数
+ * @param options
+ */
 export const getCropImgData = async (options: any): Promise<string> => {
   const { url, imgLayout, imgAxis, cropAxis, cropLayout, outputType, cropping } = options
   const canvas = document.createElement('canvas')
@@ -216,4 +222,13 @@ export const getCropImgData = async (options: any): Promise<string> => {
       reject(e)
     }
   })
+}
+
+/**
+ * 边界校验函数, 截图框应该被包裹在容器里面
+ * @param  { cropAxis, cropLayout, imgAxis, imgLayout}
+ */
+
+export const detectionBoundary = () => {
+  console.log(1)
 }

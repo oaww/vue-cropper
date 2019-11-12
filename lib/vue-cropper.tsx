@@ -400,30 +400,6 @@ export default class VueCropper extends Vue {
     return createImgStyle({ ...this.imgLayout }, wrapper, this.mode)
   }
 
-  // 移动图片
-  moveImg(message: InterfaceMessageEvent) {
-    // 拿到的是变化之后的坐标轴
-    if (message.change) {
-      // console.log(message.change)
-      // 去更改图片的位置
-      const axis = {
-        x: message.change.x + this.imgAxis.x,
-        y: message.change.y + this.imgAxis.y,
-      }
-      const style = translateStyle(
-        {
-          scale: this.imgAxis.scale,
-          imgStyle: { ...this.imgLayout },
-          layoutStyle: { ...this.wrapLayout },
-          rotate: this.imgAxis.rotate,
-        },
-        axis,
-      )
-      this.imgExhibitionStyle = style.imgExhibitionStyle
-      this.imgAxis = style.imgAxis
-    }
-  }
-
   // 鼠标移入截图组件
   mouseInCropper() {
     window.addEventListener(supportWheel, this.mouseScroll, {
@@ -465,6 +441,45 @@ export default class VueCropper extends Vue {
     this.imgAxis = style.imgAxis
   }
 
+  // 移动图片
+  moveImg(message: InterfaceMessageEvent) {
+    // 拿到的是变化之后的坐标轴
+    if (message.change) {
+      // console.log(message.change)
+      // 去更改图片的位置
+      const axis = {
+        x: message.change.x + this.imgAxis.x,
+        y: message.change.y + this.imgAxis.y,
+      }
+
+      // 这个时候去校验下是否图片已经被拖拽出了不可限制区域，添加回弹
+      const isImgCrossing = this.checkedImgCrossing()
+      console.log(isImgCrossing)
+
+      const style = translateStyle(
+        {
+          scale: this.imgAxis.scale,
+          imgStyle: { ...this.imgLayout },
+          layoutStyle: { ...this.wrapLayout },
+          rotate: this.imgAxis.rotate,
+        },
+        axis,
+      )
+      this.imgExhibitionStyle = style.imgExhibitionStyle
+      this.imgAxis = style.imgAxis
+    }
+  }
+
+  checkedImgCrossing(): boolean {
+    // 校验图片是否超过区域， 超过返回 true, 否则返回 false
+    return true
+  }
+
+  // 回弹图片
+  reboundImg(): void {
+    console.log('图片拖拽结束, 可以开始校验位置，回弹了')
+  }
+
   // 绑定拖拽
   bindMoveImg(): void {
     this.unbindMoveImg()
@@ -472,14 +487,13 @@ export default class VueCropper extends Vue {
     this.cropImg = new TouchEvent(domImg)
     // 图片拖拽绑定
     this.cropImg.on('down-to-move', this.moveImg)
-    this.cropImg.on('up', () => {
-      console.log('图片拖拽结束, 可以开始校验位置，回弹了')
-    })
+    this.cropImg.on('up', this.reboundImg)
   }
 
   unbindMoveImg(): void {
     if (this.cropImg) {
       this.cropImg.off('down-to-move', this.moveImg)
+      this.cropImg.off('up', this.reboundImg)
     }
   }
 
