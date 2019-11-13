@@ -8,6 +8,7 @@ import {
   translateStyle,
   loadFile,
   getCropImgData,
+  detectionBoundary,
 } from './common'
 import { supportWheel, changeImgSize } from './changeImgSize'
 
@@ -453,8 +454,13 @@ export default class VueCropper extends Vue {
       }
 
       // 这个时候去校验下是否图片已经被拖拽出了不可限制区域，添加回弹
-      const isImgCrossing = this.checkedImgCrossing()
-      console.log(isImgCrossing)
+      const crossing = detectionBoundary(
+        { ...this.cropAxis },
+        { ...this.cropLayout },
+        { ...this.imgAxis },
+        { ...this.imgLayout },
+      )
+      console.log(crossing)
 
       const style = translateStyle(
         {
@@ -468,11 +474,6 @@ export default class VueCropper extends Vue {
       this.imgExhibitionStyle = style.imgExhibitionStyle
       this.imgAxis = style.imgAxis
     }
-  }
-
-  checkedImgCrossing(): boolean {
-    // 校验图片是否超过区域， 超过返回 true, 否则返回 false
-    return true
   }
 
   // 回弹图片

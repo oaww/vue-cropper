@@ -5,6 +5,8 @@ import {
   InterfaceModeHandle,
   InterfaceRenderImgLayout,
   InterfaceAxis,
+  InterfaceLayout,
+  InterfaceImgAxis,
 } from './interface'
 
 // 图片方向校验
@@ -225,10 +227,65 @@ export const getCropImgData = async (options: any): Promise<string> => {
 }
 
 /**
+ * 边界计算函数 -> 返回图片应该要放大到多少，以及各个方向的最大坐标点
+ * @param  { cropAxis, cropLayout, imgAxis, imgLayout}
+ * @return { top, right, bottom, left, scale}
+ */
+export const boundaryCalculation = (
+  cropAxis: InterfaceAxis,
+  cropLayout: InterfaceLayoutStyle,
+  imgAxis: InterfaceImgAxis,
+  imgLayout: InterfaceLayoutStyle,
+) => {
+  console.log(cropAxis, cropLayout, imgAxis, imgLayout)
+}
+
+/**
  * 边界校验函数, 截图框应该被包裹在容器里面
  * @param  { cropAxis, cropLayout, imgAxis, imgLayout}
+ * 返回参数 包括是否在边界内， 以及需要往哪个方向进行回弹
+ * 如果判断图片够不够大，是否进行放大处理， 即宽度 高度要比截图框大
+ * 截图的 x 小于 图片的 x  那么图片需要往左移动
+ * 截图框的 x + w  大于 图片的 x + w 那么图片需要右移
+ * 截图 y 小于 图片的 y  那么图片上移
+ * 截图的 y + h 大于 图片的 y + h 图片需要下移
+ * @return
  */
 
-export const detectionBoundary = () => {
-  console.log(1)
+export const detectionBoundary = (
+  cropAxis: InterfaceAxis,
+  cropLayout: InterfaceLayoutStyle,
+  imgAxis: InterfaceImgAxis,
+  imgLayout: InterfaceLayoutStyle,
+) => {
+  const imgWidth = imgLayout.width * imgAxis.scale
+  const imgHeight = imgLayout.height * imgAxis.scale
+  // 横向的方向
+  let landscape = ''
+  // 纵向的方向
+  let portrait = ''
+  // 判断横向
+  if (cropAxis.x < imgAxis.x) {
+    // 图片需要左移
+    landscape = 'left'
+  }
+
+  if (cropAxis.x + cropLayout.width > imgAxis.x + imgWidth) {
+    // 图片需要右移
+    landscape = 'right'
+  }
+
+  if (cropAxis.y < imgAxis.y) {
+    // 图片需上
+    portrait = 'top'
+  }
+
+  if (cropAxis.y + cropLayout.height > imgAxis.y + imgHeight) {
+    // 图片需下
+    portrait = 'bottom'
+  }
+  return {
+    landscape,
+    portrait,
+  }
 }
