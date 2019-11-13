@@ -172,7 +172,7 @@ export default class VueCropper extends Vue {
 
   // 截图框是否应该限制在图片里面
   @Prop({ default: true })
-  readonly centerBox!: true
+  readonly centerBox!: boolean
 
   @Watch('img')
   onImgChanged(val: string) {
@@ -357,6 +357,7 @@ export default class VueCropper extends Vue {
             if (this.cropping) {
               this.renderCrop()
             }
+            this.reboundImg()
             this.isLoading = false
           } else {
             this.imgs = ''
@@ -508,6 +509,9 @@ export default class VueCropper extends Vue {
 
   // 回弹图片
   reboundImg(): void {
+    if (!this.centerBox) {
+      return
+    }
     // 这个时候去校验下是否图片已经被拖拽出了不可限制区域，添加回弹
     const crossing = detectionBoundary(
       { ...this.cropAxis },
