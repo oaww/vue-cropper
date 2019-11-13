@@ -9,6 +9,7 @@ import {
   loadFile,
   getCropImgData,
   detectionBoundary,
+  setAnimation,
 } from './common'
 import { supportWheel, changeImgSize } from './changeImgSize'
 
@@ -24,6 +25,8 @@ import {
   InterfaceLayoutStyle,
   InterfaceTransformStyle,
 } from './interface'
+
+import { RESISTANCE, BOUNDARY_DURATION } from './config'
 
 import TouchEvent from './touch'
 @Component
@@ -120,6 +123,10 @@ export default class VueCropper extends Vue {
 
   cropBox: TouchEvent | null = null
 
+  waitingImgChecked: boolean = false
+
+  setWaitFunc: number = 0
+
   // 图片地址
   @Prop({ default: '' })
   readonly img!: string
@@ -142,7 +149,7 @@ export default class VueCropper extends Vue {
   readonly filter!: (canvas: HTMLCanvasElement) => HTMLCanvasElement | null
 
   // 输出的图片格式
-  @Prop({ default: 'png' })
+  @Prop({ default: 'jpeg' })
   readonly outputType!: string
 
   /*
@@ -418,15 +425,20 @@ export default class VueCropper extends Vue {
     e.preventDefault()
     const scale = changeImgSize(e, this.imgAxis.scale, this.imgLayout)
     // console.log(scale)
-    this.changeScale(scale)
+    this.setScale(scale)
+    // console.log('scroll')
   }
 
   // 修改图片缩放比例函数
-  changeScale(scale: number) {
+  setScale(scale: number, keep: boolean = false) {
     // 保持当前坐标比例
     const axis = {
-      x: this.imgAxis.x - (this.imgLayout.width * (scale - this.imgAxis.scale)) / 2,
-      y: this.imgAxis.y - (this.imgLayout.height * (scale - this.imgAxis.scale)) / 2,
+      x: this.imgAxis.x,
+      y: this.imgAxis.y,
+    }
+    if (!keep) {
+      axis.x -= (this.imgLayout.width * (scale - this.imgAxis.scale)) / 2
+      axis.y -= (this.imgLayout.height * (scale - this.imgAxis.scale)) / 2
     }
 
     const style = translateStyle(
@@ -440,6 +452,12 @@ export default class VueCropper extends Vue {
     )
     this.imgExhibitionStyle = style.imgExhibitionStyle
     this.imgAxis = style.imgAxis
+    // 设置完成图片大小后去校验 图片的坐标轴
+    clearTimeout(this.setWaitFunc)
+    this.setWaitFunc = setTimeout(() => {
+      this.reboundImg()
+      this.waitingImgChecked = false
+    }, BOUNDARY_DURATION)
   }
 
   // 移动图片
@@ -453,32 +471,94 @@ export default class VueCropper extends Vue {
         y: message.change.y + this.imgAxis.y,
       }
 
-      // 这个时候去校验下是否图片已经被拖拽出了不可限制区域，添加回弹
-      const crossing = detectionBoundary(
-        { ...this.cropAxis },
-        { ...this.cropLayout },
-        { ...this.imgAxis },
-        { ...this.imgLayout },
-      )
-      console.log(crossing)
+      if (this.centerBox) {
+        // 这个时候去校验下是否图片已经被拖拽出了不可限制区域，添加回弹
+        const crossing = detectionBoundary(
+          { ...this.cropAxis },
+          { ...this.cropLayout },
+          { ...this.imgAxis },
+          { ...this.imgLayout },
+        )
 
-      const style = translateStyle(
-        {
-          scale: this.imgAxis.scale,
-          imgStyle: { ...this.imgLayout },
-          layoutStyle: { ...this.wrapLayout },
-          rotate: this.imgAxis.rotate,
-        },
-        axis,
-      )
-      this.imgExhibitionStyle = style.imgExhibitionStyle
-      this.imgAxis = style.imgAxis
+        if (crossing.landscape !== '' || crossing.portrait !== '') {
+          // 施加拖动阻力 ？是否需要添加越来越大的阻力
+          axis.x = this.imgAxis.x + message.change.x * RESISTANCE
+          axis.y = this.imgAxis.y + message.change.y * RESISTANCE
+        }
+      }
+
+      this.setImgAxis(axis)
     }
+  }
+
+  // 设置图片坐标
+  setImgAxis(axis: InterfaceAxis) {
+    const style = translateStyle(
+      {
+        scale: this.imgAxis.scale,
+        imgStyle: { ...this.imgLayout },
+        layoutStyle: { ...this.wrapLayout },
+        rotate: this.imgAxis.rotate,
+      },
+      axis,
+    )
+    this.imgExhibitionStyle = style.imgExhibitionStyle
+    this.imgAxis = style.imgAxis
   }
 
   // 回弹图片
   reboundImg(): void {
-    console.log('图片拖拽结束, 可以开始校验位置，回弹了')
+    // 这个时候去校验下是否图片已经被拖拽出了不可限制区域，添加回弹
+    const crossing = detectionBoundary(
+      { ...this.cropAxis },
+      { ...this.cropLayout },
+      { ...this.imgAxis },
+      { ...this.imgLayout },
+    )
+    // console.log(crossing)
+    if (crossing.scale) {
+      setAnimation(this.imgAxis.scale, crossing.scale, BOUNDARY_DURATION, value => {
+        this.setScale(value, true)
+      })
+    }
+
+    if (crossing.landscape === 'left') {
+      setAnimation(this.imgAxis.x, crossing.boundary.left, BOUNDARY_DURATION, value => {
+        this.setImgAxis({
+          x: value,
+          y: this.imgAxis.y,
+        })
+      })
+    }
+
+    if (crossing.landscape === 'right') {
+      setAnimation(this.imgAxis.x, crossing.boundary.right, BOUNDARY_DURATION, value => {
+        this.setImgAxis({
+          x: value,
+          y: this.imgAxis.y,
+        })
+      })
+    }
+
+    if (crossing.portrait === 'top') {
+      setAnimation(this.imgAxis.y, crossing.boundary.top, BOUNDARY_DURATION, value => {
+        this.setImgAxis({
+          x: this.imgAxis.x,
+          y: value,
+        })
+      })
+    }
+
+    if (crossing.portrait === 'bottom') {
+      setAnimation(this.imgAxis.y, crossing.boundary.bottom, BOUNDARY_DURATION, value => {
+        this.setImgAxis({
+          x: this.imgAxis.x,
+          y: value,
+        })
+      })
+    }
+
+    console.log('可以开始校验位置，回弹了')
   }
 
   // 绑定拖拽
@@ -503,12 +583,14 @@ export default class VueCropper extends Vue {
     const domBox = this.$refs.cropperBox
     this.cropBox = new TouchEvent(domBox)
     this.cropBox.on('down-to-move', this.moveCrop)
+    this.cropBox.on('up', this.reboundImg)
     this.cropImg = null
   }
 
   unbindMoveCrop(): void {
     if (this.cropBox) {
       this.cropBox.off('down-to-move', this.moveCrop)
+      this.cropBox.off('up', this.reboundImg)
       this.cropBox = null
     }
   }
@@ -696,9 +778,9 @@ export default class VueCropper extends Vue {
         onmouseout={this.mouseOutCropper}
       >
         {this.imgs ? (
-          <section class="cropper-box">
+          <section class="cropper-box cropper-fade-in">
             {/* 图片展示框 */}
-            <section class="cropper-box-canvas cropper-fade-in" style={this.imgExhibitionStyle}>
+            <section class="cropper-box-canvas" style={this.imgExhibitionStyle}>
               <img src={this.imgs} alt="vue-cropper" />
             </section>
 
@@ -707,7 +789,7 @@ export default class VueCropper extends Vue {
 
             {/* 截图框展示 */}
             {this.cropping ? (
-              <section class="cropper-crop-box cropper-fade-in" style={this.getCropBoxStyle()}>
+              <section class="cropper-crop-box" style={this.getCropBoxStyle()}>
                 <span class="cropper-view-box">
                   <img src={this.imgs} style={this.getCropImgStyle()} alt="cropper-img" />
                 </span>

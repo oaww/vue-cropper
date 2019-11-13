@@ -7,6 +7,7 @@ import {
   InterfaceAxis,
   InterfaceLayout,
   InterfaceImgAxis,
+  InterfaceBoundary,
 } from './interface'
 
 // 图片方向校验
@@ -228,6 +229,12 @@ export const getCropImgData = async (options: any): Promise<string> => {
 
 /**
  * 边界计算函数 -> 返回图片应该要放大到多少，以及各个方向的最大坐标点
+ *  返回参数 包括是否在边界内， 以及需要往哪个方向进行回弹
+ * 如果判断图片够不够大，是否进行放大处理， 即宽度 高度要比截图框大
+ * 截图的 x 小于 图片的 x  那么图片需要往左移动
+ * 截图框的 x + w  大于 图片的 x + w 那么图片需要右移
+ * 截图 y 小于 图片的 y  那么图片上移
+ * 截图的 y + h 大于 图片的 y + h 图片需要下移
  * @param  { cropAxis, cropLayout, imgAxis, imgLayout}
  * @return { top, right, bottom, left, scale}
  */
@@ -236,19 +243,50 @@ export const boundaryCalculation = (
   cropLayout: InterfaceLayoutStyle,
   imgAxis: InterfaceImgAxis,
   imgLayout: InterfaceLayoutStyle,
-) => {
-  console.log(cropAxis, cropLayout, imgAxis, imgLayout)
+): InterfaceBoundary => {
+  // 返回各个方向允许的值，以及图片的最小缩放比例
+  // 先不管有旋转的情况，默认为没有旋转的返回
+
+  const boundary: InterfaceBoundary = {
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    scale: 1,
+  }
+  // 最小缩放比例
+  let scale = imgAxis.scale
+
+  let imgWidth = imgLayout.width * scale
+  let imgHeight = imgLayout.height * scale
+
+  if (imgWidth < cropLayout.width || imgHeight < cropLayout.height) {
+    scale = Math.max(cropLayout.width / imgLayout.width, cropLayout.height / imgLayout.height)
+  }
+
+  imgWidth = imgLayout.width * scale
+  imgHeight = imgLayout.height * scale
+
+  boundary.scale = scale
+
+  // 左边的最大值 即图片的左边的坐标应该小于截图框坐标的坐标
+  boundary.left = cropAxis.x
+
+  // 右边的最小值， 图片坐标加图片宽度应该大于 截图框的坐标加上截图框的宽度
+  boundary.right = cropAxis.x + cropLayout.width - imgWidth
+
+  // 上面最大的值，应该小于这个值
+  boundary.top = cropAxis.y
+
+  // 下面最小的值
+  boundary.bottom = cropAxis.y + cropLayout.height - imgHeight
+
+  return boundary
 }
 
 /**
  * 边界校验函数, 截图框应该被包裹在容器里面
  * @param  { cropAxis, cropLayout, imgAxis, imgLayout}
- * 返回参数 包括是否在边界内， 以及需要往哪个方向进行回弹
- * 如果判断图片够不够大，是否进行放大处理， 即宽度 高度要比截图框大
- * 截图的 x 小于 图片的 x  那么图片需要往左移动
- * 截图框的 x + w  大于 图片的 x + w 那么图片需要右移
- * 截图 y 小于 图片的 y  那么图片上移
- * 截图的 y + h 大于 图片的 y + h 图片需要下移
  * @return
  */
 
@@ -258,34 +296,88 @@ export const detectionBoundary = (
   imgAxis: InterfaceImgAxis,
   imgLayout: InterfaceLayoutStyle,
 ) => {
-  const imgWidth = imgLayout.width * imgAxis.scale
-  const imgHeight = imgLayout.height * imgAxis.scale
   // 横向的方向
   let landscape = ''
   // 纵向的方向
   let portrait = ''
   // 判断横向
-  if (cropAxis.x < imgAxis.x) {
-    // 图片需要左移
+  const boundary: InterfaceBoundary = boundaryCalculation(cropAxis, cropLayout, imgAxis, imgLayout)
+  let scale = 0
+
+  if (imgAxis.scale < boundary.scale) {
+    scale = boundary.scale
+  }
+
+  if (imgAxis.x > boundary.left) {
     landscape = 'left'
   }
 
-  if (cropAxis.x + cropLayout.width > imgAxis.x + imgWidth) {
-    // 图片需要右移
+  if (imgAxis.x < boundary.right) {
     landscape = 'right'
   }
 
-  if (cropAxis.y < imgAxis.y) {
-    // 图片需上
+  if (imgAxis.y > boundary.top) {
     portrait = 'top'
   }
 
-  if (cropAxis.y + cropLayout.height > imgAxis.y + imgHeight) {
-    // 图片需下
+  if (imgAxis.y < boundary.bottom) {
     portrait = 'bottom'
   }
+
   return {
     landscape,
     portrait,
+    scale,
+    boundary,
   }
+}
+
+/*
+ * t: current time（当前时间）；
+ * b: beginning value（初始值）；
+ * c: change in value（变化量）；
+ * d: duration（持续时间）。
+ * you can visit 'https://www.zhangxinxu.com/study/201612/how-to-use-tween-js.html' to get effect
+ */
+export const tween = {
+  easeInOut: (t: number, b: number, c: number, d: number) => {
+    t = (t / d) * 2
+    if (t < 1) {
+      return (c / 2) * t * t + b
+    }
+    return (-c / 2) * (--t * (t - 2) - 1) + b
+  },
+}
+
+export const setAnimation = (
+  from: number,
+  to: number,
+  duration: number,
+  callback?: (value: number) => void,
+) => {
+  // 算法需要的几个变量
+  let start = 0
+  // during根据设置的总时间计算
+  const during = Math.ceil(duration / 17)
+  // 动画请求帧
+  let req: number = 0
+
+  const step = () => {
+    const value = tween.easeInOut(start, from, to - from, during)
+    start++
+    // 如果还没有运动到位，继续
+    if (start <= during) {
+      if (callback) {
+        callback(value)
+      }
+      req = requestAnimationFrame(step)
+    } else {
+      // 动画结束，这里可以插入回调...
+      if (callback) {
+        callback(to)
+      }
+    }
+  }
+  step()
+  return (): number => req
 }
