@@ -11,4 +11,4 @@ export const RENDER_RATIO: number = window.devicePixelRatio
 export const RESISTANCE: number = 0.2
 
 // 回弹的时间 ms
-export const BOUNDARY_DURATION = 200
+export const BOUNDARY_DURATION = 100

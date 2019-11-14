@@ -426,6 +426,20 @@ export default class VueCropper extends Vue {
     e.preventDefault()
     const scale = changeImgSize(e, this.imgAxis.scale, this.imgLayout)
     // console.log(scale)
+    // if (this.centerBox) {
+    //   // 这个时候去校验下是否图片已经被拖拽出了不可限制区域，添加回弹
+    //   const crossing = detectionBoundary(
+    //     { ...this.cropAxis },
+    //     { ...this.cropLayout },
+    //     { ...this.imgAxis },
+    //     { ...this.imgLayout },
+    //   )
+    //   console.log(crossing)
+    //   if (crossing.scale > this.imgAxis.scale || crossing.landscape || crossing.portrait) {
+    //     return
+    //   }
+    // }
+    // console.log('go')
     this.setScale(scale)
     // console.log('scroll')
   }
@@ -520,7 +534,7 @@ export default class VueCropper extends Vue {
       { ...this.imgLayout },
     )
     // console.log(crossing)
-    if (crossing.scale) {
+    if (this.imgAxis.scale < crossing.scale) {
       setAnimation(this.imgAxis.scale, crossing.scale, BOUNDARY_DURATION, value => {
         this.setScale(value, true)
       })

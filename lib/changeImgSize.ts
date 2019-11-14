@@ -18,7 +18,7 @@ const isIE =
 export const changeImgSize = (e: any, scale: number, imgStyle: InterfaceLayoutStyle): number => {
   // 获取到变化量
   let change = e.deltaY || e.wheelDelta
-  let nowScale = scale
+  let nowScale: number = scale
   if (isFirefox) {
     change = change * 30
   }

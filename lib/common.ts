@@ -281,6 +281,8 @@ export const boundaryCalculation = (
   // 下面最小的值
   boundary.bottom = cropAxis.y + cropLayout.height - imgHeight
 
+  // 如果图片旋转了， 那么需要进行坐标的转化计算
+
   return boundary
 }
 
@@ -302,11 +304,8 @@ export const detectionBoundary = (
   let portrait = ''
   // 判断横向
   const boundary: InterfaceBoundary = boundaryCalculation(cropAxis, cropLayout, imgAxis, imgLayout)
-  let scale = 0
 
-  if (imgAxis.scale < boundary.scale) {
-    scale = boundary.scale
-  }
+  const scale = boundary.scale
 
   if (imgAxis.x > boundary.left) {
     landscape = 'left'
