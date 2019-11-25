@@ -11,7 +11,7 @@ import {
   detectionBoundary,
   setAnimation,
 } from './common'
-import { supportWheel, changeImgSize } from './changeImgSize'
+import { supportWheel, changeImgSize, isIE } from './changeImgSize'
 
 import './style/index.scss'
 
@@ -149,7 +149,7 @@ export default class VueCropper extends Vue {
   readonly filter!: (canvas: HTMLCanvasElement) => HTMLCanvasElement | null
 
   // 输出的图片格式
-  @Prop({ default: 'jpeg' })
+  @Prop({ default: 'png' })
   readonly outputType!: string
 
   /*
@@ -171,7 +171,7 @@ export default class VueCropper extends Vue {
   readonly defaultRotate!: number
 
   // 截图框是否应该限制在图片里面
-  @Prop({ default: true })
+  @Prop({ default: false })
   readonly centerBox!: boolean
 
   @Watch('img')
@@ -411,13 +411,18 @@ export default class VueCropper extends Vue {
 
   // 鼠标移入截图组件
   mouseInCropper() {
-    window.addEventListener(supportWheel, this.mouseScroll, {
-      passive: false,
-    })
+    if (isIE) {
+      window.addEventListener(supportWheel, this.mouseScroll)
+    } else {
+      window.addEventListener(supportWheel, this.mouseScroll, {
+        passive: false,
+      })
+    }
   }
 
   // 鼠标移出截图组件
   mouseOutCropper() {
+    // console.log('remove')
     window.removeEventListener(supportWheel, this.mouseScroll)
   }
 
@@ -425,21 +430,6 @@ export default class VueCropper extends Vue {
   mouseScroll(e: Event) {
     e.preventDefault()
     const scale = changeImgSize(e, this.imgAxis.scale, this.imgLayout)
-    // console.log(scale)
-    // if (this.centerBox) {
-    //   // 这个时候去校验下是否图片已经被拖拽出了不可限制区域，添加回弹
-    //   const crossing = detectionBoundary(
-    //     { ...this.cropAxis },
-    //     { ...this.cropLayout },
-    //     { ...this.imgAxis },
-    //     { ...this.imgLayout },
-    //   )
-    //   console.log(crossing)
-    //   if (crossing.scale > this.imgAxis.scale || crossing.landscape || crossing.portrait) {
-    //     return
-    //   }
-    // }
-    // console.log('go')
     this.setScale(scale)
     // console.log('scroll')
   }

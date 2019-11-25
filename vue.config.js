@@ -11,8 +11,8 @@ module.exports = {
         // 运行时的端口号
         devServer: {
           port: 8889,
-          host: 'localhost',
-          // host: '0.0.0.0',
+          // host: 'localhost',
+          host: '0.0.0.0',
           // 用于nginx配置 不检查host
           disableHostCheck: true,
         },

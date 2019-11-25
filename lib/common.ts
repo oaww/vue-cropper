@@ -211,7 +211,8 @@ export const getCropImgData = async (options: any): Promise<string> => {
       canvas.height = height
 
       // 是否填充背景颜色 transparent
-      const fillColor = 'transparent'
+      const fillColor = 'red'
+      // const fillColor = 'transparent'
       ctx.fillStyle = fillColor
       ctx.fillRect(0, 0, width, height)
 
@@ -254,7 +255,7 @@ export const boundaryCalculation = (
     bottom: 0,
     scale: 1,
   }
-  // 最小缩放比例
+  // 根据当前比例去计算 需不要去放大图片
   let scale = imgAxis.scale
 
   let imgWidth = imgLayout.width * scale
@@ -281,9 +282,27 @@ export const boundaryCalculation = (
   // 下面最小的值
   boundary.bottom = cropAxis.y + cropLayout.height - imgHeight
 
-  // 如果图片旋转了， 那么需要进行坐标的转化计算
+  // 如果图片旋转了， 那么需要进行坐标的转化计算 计算图片四个顶点的坐标，找到 4 个方向的最远点
+  if (imgAxis.rotate) {
+    // 如果有旋转角度, 获取图片的四个点的坐标轴。
+  }
 
   return boundary
+}
+
+// 计算完全包含截图框所需的缩放倍数
+export const getCoverPointScale = (point: InterfaceAxis, recPoints: [InterfaceAxis]) => {
+  console.log(point, recPoints)
+}
+
+// 判断图片是否完全包含截图框
+export const isWholeCover = (rectImg: [InterfaceAxis], rectCrop: [InterfaceAxis]) => {
+  console.log(rectImg, rectCrop)
+}
+
+// 获取矩形的坐标轴
+export const getRectPoints = (x: number, y: number, width: number, height: number, rotate = 0) => {
+  console.log(x)
 }
 
 /**
@@ -307,7 +326,7 @@ export const detectionBoundary = (
 
   const scale = boundary.scale
 
-  if (imgAxis.x > boundary.left) {
+  if (imgAxis.x >= boundary.left) {
     landscape = 'left'
   }
 
@@ -315,7 +334,7 @@ export const detectionBoundary = (
     landscape = 'right'
   }
 
-  if (imgAxis.y > boundary.top) {
+  if (imgAxis.y >= boundary.top) {
     portrait = 'top'
   }
 
@@ -328,6 +347,7 @@ export const detectionBoundary = (
     portrait,
     scale,
     boundary,
+    imgAxis,
   }
 }
 

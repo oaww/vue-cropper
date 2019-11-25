@@ -7,6 +7,7 @@
       :mode="option.mode"
       :filter="filter"
       :defaultRotate="option.rotate"
+      :centerBox="option.centerBox"
       @img-upload="imgUpload"
     ></vue-cropper>
     <div class="control">
@@ -49,6 +50,12 @@
       </section>
     </div>
     <div class="control">
+      <section class="control-item">
+        <label for="centerBox">
+          截图框是否限制在图片里
+        </label>
+        <input type="checkbox" v-model="option.centerBox" id="centerBox">
+      </section>
       <button class="btn" @click="() => this.$refs.cropper.renderCrop()">生成截图框</button>
       <button class="btn" @click="() => this.$refs.cropper.clearCrop()">清除截图框</button>
     </div>
@@ -85,14 +92,15 @@ export default class Home extends Vue {
 
 
   option =  {
-    img: 'http://cdn.xyxiao.cn/bg1.jpg',
-    // img: 'http://cdn.xyxiao.cn/6FC898F0005903969F7C0487928FA097.png',
+    // img: 'http://cdn.xyxiao.cn/bg1.jpg',
+    img: 'http://cdn.xyxiao.cn/6FC898F0005903969F7C0487928FA097.png',
     mode: 'contain',
     wrapper: {
       width: '900px',
       height: '500px',
     },
-    rotate: 0,
+    rotate: 30,
+    centerBox: true
   }
 
   filters: Array<{

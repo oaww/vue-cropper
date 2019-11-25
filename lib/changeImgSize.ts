@@ -12,8 +12,7 @@ let coeStatus = ''
 const isFirefox = navigator.userAgent.indexOf('Firefox') > -1
 
 // 取得浏览器的userAgent字符
-const isIE =
-  navigator.userAgent.indexOf('compatible') > -1 && navigator.userAgent.indexOf('MSIE') > -1
+export const isIE = !!window.ActiveXObject || 'ActiveXObject' in window
 
 export const changeImgSize = (e: any, scale: number, imgStyle: InterfaceLayoutStyle): number => {
   // 获取到变化量
