@@ -283,26 +283,161 @@ export const boundaryCalculation = (
   boundary.bottom = cropAxis.y + cropLayout.height - imgHeight
 
   // 如果图片旋转了， 那么需要进行坐标的转化计算 计算图片四个顶点的坐标，找到 4 个方向的最远点
-  if (imgAxis.rotate) {
-    // 如果有旋转角度, 获取图片的四个点的坐标轴。
+  if (imgAxis.rotate || imgAxis.rotate === 0) {
+    // 如果有旋转角度, 获取图片的四个点的坐标轴。 这时代表采取新的检测方式去判断
+    const rectImg = getRectPoints(imgAxis.x, imgAxis.y, imgWidth, imgHeight, imgAxis.rotate)
+    const rectCrop = getRectPoints(cropAxis.x, cropAxis.y, cropLayout.width, cropLayout.height)
+    const isCover = isWholeCover(rectImg, rectImg)
+    console.log(rectImg, rectCrop, isCover)
   }
 
   return boundary
 }
 
 // 计算完全包含截图框所需的缩放倍数
-export const getCoverPointScale = (point: InterfaceAxis, recPoints: [InterfaceAxis]) => {
+export const getCoverPointScale = (point: InterfaceAxis, recPoints: InterfaceAxis[]) => {
   console.log(point, recPoints)
 }
 
 // 判断图片是否完全包含截图框
-export const isWholeCover = (rectImg: [InterfaceAxis], rectCrop: [InterfaceAxis]) => {
-  console.log(rectImg, rectCrop)
+export const isWholeCover = (rectImg: InterfaceAxis[], rectCrop: InterfaceAxis[]) => {
+  for (const i of rectCrop) {
+    // 检测截图框的 4 个点是不是在矩形里面
+    if (!isPointInRectCheckByLen(i, rectImg)) {
+      console.log('不包含了哦')
+      return false
+    }
+  }
+  return true
+}
+
+// 根据矩形中心到某一点向量在矩形边框向量的投影长度判断该点是否在矩形内
+export const isPointInRectCheckByLen = (
+  point: InterfaceAxis,
+  rectPoints: InterfaceAxis[],
+): boolean => {
+  const pcv = getPCVectorProjOnUpAndRight(point, rectPoints)
+  console.log(pcv)
+  const precision = 100 // 保留两位小数
+
+  const uLen = Math.round(vecLen(pcv.uproj) * precision)
+  const height = Math.round((vecLen(pcv.up) / 2) * precision)
+  const rLen = Math.round(vecLen(pcv.rproj) * precision)
+  const width = Math.round((vecLen(pcv.right) / 2) * precision)
+  console.log(uLen, rLen, width, height)
+  if (uLen <= height && rLen <= width) {
+    return true
+  } else {
+    return false
+  }
+}
+
+// 计算矩形中心到某点的向量在矩形自身坐标系上方向和右方向上的投影向量
+export const getPCVectorProjOnUpAndRight = (point: InterfaceAxis, rectPoints: InterfaceAxis[]) => {
+  // 计算矩形自身坐标系的上方向向量和右方向向量
+  const up = {
+    x: rectPoints[1].x - rectPoints[2].x,
+    y: rectPoints[1].y - rectPoints[2].y,
+  }
+  const right = {
+    x: rectPoints[1].x - rectPoints[0].x,
+    y: rectPoints[1].y - rectPoints[0].y,
+  }
+  // 计算矩形中心点
+  const center = getPointsCenter(rectPoints)
+  const line = {
+    x: point.x - center.x,
+    y: point.y - center.y,
+  }
+  const uproj = getProjectionVector(line, up)
+  const rproj = getProjectionVector(line, right)
+  return {
+    up,
+    uproj,
+    right,
+    rproj,
+  }
+}
+
+// 计算向量 a 在向量 b 上的投影向量
+export const getProjectionVector = (vecA: InterfaceAxis, vecB: InterfaceAxis): InterfaceAxis => {
+  const bLen = vecLen(vecB)
+  const ab = vecA.x * vecB.x + vecA.y * vecB.y
+
+  const proj = {
+    x: (ab / Math.pow(bLen, 2)) * vecB.x,
+    y: (ab / Math.pow(bLen, 2)) * vecB.y,
+  }
+  return proj
+}
+
+// 获得矩形点坐标中心
+export const getPointsCenter = (points: InterfaceAxis[]) => {
+  const center = {
+    x: (points[0].x + points[2].x) / 2,
+    y: (points[0].y + points[2].y) / 2,
+  }
+  return center
+}
+
+// 计算向量的模
+export const vecLen = (vec: InterfaceAxis): number => {
+  return Math.sqrt(vec.x * vec.x + vec.y * vec.y)
 }
 
 // 获取矩形的坐标轴
-export const getRectPoints = (x: number, y: number, width: number, height: number, rotate = 0) => {
-  console.log(x)
+export const getRectPoints = (
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  rotate = 0,
+): InterfaceAxis[] => {
+  // 先计算图片原始坐标  上左 上右 下右  下左
+  const oldRect = [
+    {
+      x,
+      y,
+    },
+    {
+      x: x + width,
+      y,
+    },
+    {
+      x: x + width,
+      y: y + height,
+    },
+    {
+      x,
+      y: y + height,
+    },
+  ]
+  if (rotate === 0) {
+    // 没有旋转直接返回坐标
+    return oldRect
+  }
+  // 获取图片的中心点
+  const center = getPointsCenter(oldRect)
+  // 中心旋转之后得到新坐标
+  const newRect = getRotateAxis(oldRect, center, rotate)
+  return newRect
+}
+
+// 矩形绕一点旋转后的新坐标
+export const getRotateAxis = (
+  rect: InterfaceAxis[],
+  points: InterfaceAxis,
+  rotate: number,
+): InterfaceAxis[] => {
+  // 计算坐标轴， 转化为极坐标方程 然后转化为圆的方程
+  const angel = (rotate * Math.PI) / 180
+  rect = JSON.parse(JSON.stringify(rect))
+  return rect.map(item => {
+    const { x, y } = item
+    item.x = (x - points.x) * Math.cos(angel) - (y - points.y) * Math.sin(angel) + points.x
+    item.y = (y - points.y) * Math.cos(angel) + (x - points.x) * Math.sin(angel) + points.y
+    return item
+  })
 }
 
 /**
