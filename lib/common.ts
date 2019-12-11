@@ -282,13 +282,13 @@ export const boundaryCalculation = (
   // 下面最小的值
   boundary.bottom = cropAxis.y + cropLayout.height - imgHeight
 
-  // 如果图片旋转了， 那么需要进行坐标的转化计算 计算图片四个顶点的坐标，找到 4 个方向的最远点
   if (imgAxis.rotate || imgAxis.rotate === 0) {
-    // 如果有旋转角度, 获取图片的四个点的坐标轴。 这时代表采取新的检测方式去判断
+    // 此时应该判断 如果当前操作是属于放大缩小， 选择才采用当前判断 获取图片的四个点的坐标轴。 这时代表采取新的检测方式去判断
+    // 移动距离的计算可以先获得点到矩形中心的向量，然后计算该向量在矩形边框上的投影向量，最后可以用投影向量的长度减去边框长度的一半得到
     const rectImg = getRectPoints(imgAxis.x, imgAxis.y, imgWidth, imgHeight, imgAxis.rotate)
     const rectCrop = getRectPoints(cropAxis.x, cropAxis.y, cropLayout.width, cropLayout.height)
-    const isCover = isWholeCover(rectImg, rectImg)
-    console.log(rectImg, rectCrop, isCover)
+    const isCover = isWholeCover(rectImg, rectCrop)
+    // console.log(rectImg, rectCrop, isCover)
   }
 
   return boundary
@@ -304,10 +304,11 @@ export const isWholeCover = (rectImg: InterfaceAxis[], rectCrop: InterfaceAxis[]
   for (const i of rectCrop) {
     // 检测截图框的 4 个点是不是在矩形里面
     if (!isPointInRectCheckByLen(i, rectImg)) {
-      console.log('不包含了哦')
+      console.log('不包含了哦--')
       return false
     }
   }
+  console.log('包含了哦--')
   return true
 }
 
@@ -317,19 +318,15 @@ export const isPointInRectCheckByLen = (
   rectPoints: InterfaceAxis[],
 ): boolean => {
   const pcv = getPCVectorProjOnUpAndRight(point, rectPoints)
-  console.log(pcv)
+  // console.log(pcv)
   const precision = 100 // 保留两位小数
 
   const uLen = Math.round(vecLen(pcv.uproj) * precision)
   const height = Math.round((vecLen(pcv.up) / 2) * precision)
   const rLen = Math.round(vecLen(pcv.rproj) * precision)
   const width = Math.round((vecLen(pcv.right) / 2) * precision)
-  console.log(uLen, rLen, width, height)
-  if (uLen <= height && rLen <= width) {
-    return true
-  } else {
-    return false
-  }
+  // console.log(uLen, rLen, width, height)
+  return uLen <= height && rLen <= width
 }
 
 // 计算矩形中心到某点的向量在矩形自身坐标系上方向和右方向上的投影向量
@@ -394,7 +391,7 @@ export const getRectPoints = (
   rotate = 0,
 ): InterfaceAxis[] => {
   // 先计算图片原始坐标  上左 上右 下右  下左
-  const oldRect = [
+  let oldRect = [
     {
       x,
       y,
@@ -412,6 +409,12 @@ export const getRectPoints = (
       y: y + height,
     },
   ]
+  // 对坐标轴进行处理
+  oldRect = oldRect.map(item => {
+    // 反转 y 轴
+    item.y = -item.y
+    return item
+  })
   if (rotate === 0) {
     // 没有旋转直接返回坐标
     return oldRect
@@ -429,7 +432,7 @@ export const getRotateAxis = (
   points: InterfaceAxis,
   rotate: number,
 ): InterfaceAxis[] => {
-  // 计算坐标轴， 转化为极坐标方程 然后转化为圆的方程
+  // 计算坐标轴， 转化为极坐标方程 然后转化为圆的方程, 求出新坐标
   const angel = (rotate * Math.PI) / 180
   rect = JSON.parse(JSON.stringify(rect))
   return rect.map(item => {
