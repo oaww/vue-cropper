@@ -282,21 +282,115 @@ export const boundaryCalculation = (
   // 下面最小的值
   boundary.bottom = cropAxis.y + cropLayout.height - imgHeight
 
-  if (imgAxis.rotate || imgAxis.rotate === 0) {
-    // 此时应该判断 如果当前操作是属于放大缩小， 选择才采用当前判断 获取图片的四个点的坐标轴。 这时代表采取新的检测方式去判断
-    // 移动距离的计算可以先获得点到矩形中心的向量，然后计算该向量在矩形边框上的投影向量，最后可以用投影向量的长度减去边框长度的一半得到
-    const rectImg = getRectPoints(imgAxis.x, imgAxis.y, imgWidth, imgHeight, imgAxis.rotate)
-    const rectCrop = getRectPoints(cropAxis.x, cropAxis.y, cropLayout.width, cropLayout.height)
-    const isCover = isWholeCover(rectImg, rectCrop)
-    // console.log(rectImg, rectCrop, isCover)
+  const rotate = -imgAxis.rotate
+  // 此时应该判断 如果当前操作是属于放大缩小， 选择才采用当前判断 获取图片的四个点的坐标轴。 这时代表采取新的检测方式去判断
+  // 移动距离的计算可以先获得点到矩形中心的向量，然后计算该向量在矩形边框上的投影向量，最后可以用投影向量的长度减去边框长度的一半得到
+  const rectImg = getRectPoints(imgAxis.x, imgAxis.y, imgWidth, imgHeight, rotate)
+  const rectCrop = getRectPoints(cropAxis.x, cropAxis.y, cropLayout.width, cropLayout.height)
+  const isCover = isWholeCover(rectImg, rectCrop)
+  if (!isCover) {
+    console.log('超出边界， 需要生成新的矩形坐标')
+    const nRect = getCoveRect(rectCrop, rotate)
+    console.log('新的矩形', nRect, imgAxis.scale, rotate)
+
+    // 获取新矩形的中心
+    const center = getPointsCenter(nRect)
+    const resetRect = getRotateAxis(nRect, center, -rotate)
+    console.log(resetRect)
+    console.log({ ...boundary })
+
+    // 遍历出新的矩形中 left 的最小值
+    let minLeft = Infinity
+    let maxRight = -Infinity
+    let minTop = Infinity
+    let maxBottom = -Infinity
+    nRect.forEach(item => {
+      const ty = -item.y
+      minLeft = Math.min(item.x, minLeft)
+      maxRight = Math.max(item.x, maxRight)
+      minTop = Math.min(ty, minTop)
+      maxBottom = Math.max(ty, maxBottom)
+    })
+    console.log(minLeft, maxRight, minTop, maxBottom)
+    boundary.left = minLeft + Math.cos((rotate * Math.PI) / 180) * imgWidth - imgWidth / 2
+    boundary.right =
+      maxRight - imgWidth - Math.cos((rotate * Math.PI) / 180) * imgWidth + imgWidth / 2
+    boundary.top = minTop
+    boundary.bottom = maxBottom - imgHeight
+    // const includeScale = getCoverRectScale(rectImg, rectCrop)
+    // console.log(includeScale)
   }
 
   return boundary
 }
 
-// 计算完全包含截图框所需的缩放倍数
-export const getCoverPointScale = (point: InterfaceAxis, recPoints: InterfaceAxis[]) => {
-  console.log(point, recPoints)
+// 计算刚好包含某个矩形的新矩形
+export const getCoveRect = (rect: InterfaceAxis[], angle: number): InterfaceAxis[] => {
+  let nRect: InterfaceAxis[] = []
+  if (angle < 0) {
+    angle = (angle % 90) + 90
+  } else {
+    angle = angle % 90
+  }
+  const rad = (angle / 180) * Math.PI
+  const up = {
+    x: rect[1].x - rect[2].x,
+    y: rect[1].y - rect[2].y,
+  }
+  const right = {
+    x: rect[1].x - rect[0].x,
+    y: rect[1].y - rect[0].y,
+  }
+  const rLen = vecLen(right)
+  const uLen = vecLen(up)
+  const axis = {
+    x: 0,
+    y: 0,
+  }
+  nRect.length = 4
+  nRect.fill(Object.assign({}, axis))
+  nRect = nRect.map(item => {
+    return Object.assign({}, item)
+  })
+  nRect[0].x = rect[0].x + rLen * Math.sin(rad) * Math.sin(rad)
+  nRect[0].y = rect[0].y + rLen * Math.sin(rad) * Math.cos(rad)
+
+  nRect[1].x = rect[1].x + uLen * Math.sin(rad) * Math.cos(rad)
+  nRect[1].y = rect[1].y - uLen * Math.sin(rad) * Math.sin(rad)
+
+  nRect[2].x = rect[2].x - rLen * Math.sin(rad) * Math.sin(rad)
+  nRect[2].y = rect[2].y - rLen * Math.sin(rad) * Math.cos(rad)
+
+  nRect[3].x = rect[3].x - uLen * Math.sin(rad) * Math.cos(rad)
+  nRect[3].y = rect[3].y + uLen * Math.sin(rad) * Math.sin(rad)
+  return nRect
+}
+
+// 计算一个矩形刚好包含另一个矩形需要的缩放倍数
+export const getCoverRectScale = (outer: InterfaceAxis[], inner: InterfaceAxis[]): number => {
+  let scale = 0
+  for (const i of inner) {
+    const num = getCoverPointScale(i, outer)
+    scale = Math.max(num, scale)
+  }
+  return scale
+}
+
+// 计算矩形包含矩形外一点需要的放大倍数
+export const getCoverPointScale = (point: InterfaceAxis, rectPoints: InterfaceAxis[]): number => {
+  const pcv = getPCVectorProjOnUpAndRight(point, rectPoints)
+  // 计算矩形外一点到矩形中心向量在矩形边框向量上的投影距离
+  const uLen = vecLen(pcv.uproj)
+  const height = vecLen(pcv.up) / 2
+  const rLen = vecLen(pcv.rproj)
+  const width = vecLen(pcv.right) / 2
+
+  // 根据投影距离计算缩放倍数
+  if (uLen / height > rLen / width) {
+    return 1 + (uLen - height) / height
+  } else {
+    return 1 + (rLen - width) / width
+  }
 }
 
 // 判断图片是否完全包含截图框

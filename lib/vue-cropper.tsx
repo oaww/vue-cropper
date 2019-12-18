@@ -476,21 +476,21 @@ export default class VueCropper extends Vue {
         y: message.change.y + this.imgAxis.y,
       }
 
-      if (this.centerBox) {
-        // 这个时候去校验下是否图片已经被拖拽出了不可限制区域，添加回弹
-        const crossing = detectionBoundary(
-          { ...this.cropAxis },
-          { ...this.cropLayout },
-          { ...this.imgAxis },
-          { ...this.imgLayout },
-        )
+      // if (this.centerBox) {
+      //   // 这个时候去校验下是否图片已经被拖拽出了不可限制区域，添加回弹
+      //   const crossing = detectionBoundary(
+      //     { ...this.cropAxis },
+      //     { ...this.cropLayout },
+      //     { ...this.imgAxis },
+      //     { ...this.imgLayout },
+      //   )
 
-        if (crossing.landscape !== '' || crossing.portrait !== '') {
-          // 施加拖动阻力 ？是否需要添加越来越大的阻力
-          axis.x = this.imgAxis.x + message.change.x * RESISTANCE
-          axis.y = this.imgAxis.y + message.change.y * RESISTANCE
-        }
-      }
+      //   if (crossing.landscape !== '' || crossing.portrait !== '') {
+      //     // 施加拖动阻力 ？是否需要添加越来越大的阻力
+      //     axis.x = this.imgAxis.x + message.change.x * RESISTANCE
+      //     axis.y = this.imgAxis.y + message.change.y * RESISTANCE
+      //   }
+      // }
 
       this.setImgAxis(axis)
     }

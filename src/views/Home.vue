@@ -92,14 +92,14 @@ export default class Home extends Vue {
 
 
   option =  {
-    // img: 'http://cdn.xyxiao.cn/bg1.jpg',
-    img: 'http://cdn.xyxiao.cn/6FC898F0005903969F7C0487928FA097.png',
-    mode: 'contain',
+    img: 'http://cdn.xyxiao.cn/goodboy.jpg',
+    // img: 'http://cdn.xyxiao.cn/6FC898F0005903969F7C0487928FA097.png',
+    mode: '400px auto',
     wrapper: {
       width: '900px',
       height: '500px',
     },
-    rotate: 0,
+    rotate: 45,
     centerBox: true
   }
 
