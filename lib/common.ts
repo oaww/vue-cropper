@@ -285,112 +285,165 @@ export const boundaryCalculation = (
   const rotate = -imgAxis.rotate
   // 此时应该判断 如果当前操作是属于放大缩小， 选择才采用当前判断 获取图片的四个点的坐标轴。 这时代表采取新的检测方式去判断
   // 移动距离的计算可以先获得点到矩形中心的向量，然后计算该向量在矩形边框上的投影向量，最后可以用投影向量的长度减去边框长度的一半得到
-  const rectImg = getRectPoints(imgAxis.x, imgAxis.y, imgWidth, imgHeight, rotate)
+  let rectImg = getRectPoints(imgAxis.x, imgAxis.y, imgWidth, imgHeight, rotate)
   const rectCrop = getRectPoints(cropAxis.x, cropAxis.y, cropLayout.width, cropLayout.height)
   const isCover = isWholeCover(rectImg, rectCrop)
   if (!isCover) {
     console.log('超出边界， 需要生成新的矩形坐标')
-    const nRect = getCoveRect(rectCrop, rotate)
-    console.log('新的矩形', nRect, imgAxis.scale, rotate)
+    // 获取目前矩形的坐标
+    console.log(rectImg, rectCrop)
 
-    // 获取新矩形的中心
-    const center = getPointsCenter(nRect)
-    const resetRect = getRotateAxis(nRect, center, -rotate)
-    console.log(resetRect)
-    console.log({ ...boundary })
+    const intersectionPoint = lineIntersectionPoint(
+      rectImg[0],
+      rectImg[3],
+      rectCrop[0],
+      rectCrop[1],
+    )
+    console.log('交点', intersectionPoint)
+    const moveX = cropAxis.x - intersectionPoint.x
+    const moveY = 0
+    // 操作矩形移动
+    rectImg = moveRect(moveX, moveY, rectImg)
 
-    // 遍历出新的矩形中 left 的最小值
-    let minLeft = Infinity
-    let maxRight = -Infinity
-    let minTop = Infinity
-    let maxBottom = -Infinity
-    nRect.forEach(item => {
-      const ty = -item.y
-      minLeft = Math.min(item.x, minLeft)
-      maxRight = Math.max(item.x, maxRight)
-      minTop = Math.min(ty, minTop)
-      maxBottom = Math.max(ty, maxBottom)
-    })
-    console.log(minLeft, maxRight, minTop, maxBottom)
-    boundary.left = minLeft + Math.cos((rotate * Math.PI) / 180) * imgWidth - imgWidth / 2
-    boundary.right =
-      maxRight - imgWidth - Math.cos((rotate * Math.PI) / 180) * imgWidth + imgWidth / 2
-    boundary.top = minTop
-    boundary.bottom = maxBottom - imgHeight
-    // const includeScale = getCoverRectScale(rectImg, rectCrop)
-    // console.log(includeScale)
+    console.log(moveX, moveY, rectImg)
+
+    boundary.top = getPointChange('top', rectImg, rectCrop, cropAxis, cropLayout, imgAxis)
+
+    boundary.left = getPointChange('left', rectImg, rectCrop, cropAxis, cropLayout, imgAxis)
+
+    // 算出截图框应该距离顶部的值
+    // const topL = cropLayout.width * Math.sin(imgAxis.rotate / 180 * Math.PI) * Math.sin((90 - imgAxis.rotate) / 180 * Math.PI)
+    // const topC = -cropAxis.y + topL
+    // console.log('最上面的坐标应该距离截图框的差值', topL, '最上面显示的坐标为', topC)
+    // const changeY = rectImg[0].y - topC
+    // const curRectImg = rectImg.map(item => {
+    //   return {
+    //     x: item.x,
+    //     y: item.y - changeY
+    //   }
+    // })
+    // console.log('新的矩形坐标', curRectImg)
+    // const originalRectImg = getRotateAxis(curRectImg, getPointsCenter(curRectImg), imgAxis.rotate)
+    // console.log('反向选择回去坐标', originalRectImg)
+    // boundary.top = -originalRectImg[0].y
+    console.log(boundary)
   }
-
   return boundary
 }
 
-// 计算刚好包含某个矩形的新矩形
-export const getCoveRect = (rect: InterfaceAxis[], angle: number): InterfaceAxis[] => {
-  let nRect: InterfaceAxis[] = []
-  if (angle < 0) {
-    angle = (angle % 90) + 90
-  } else {
-    angle = angle % 90
-  }
-  const rad = (angle / 180) * Math.PI
-  const up = {
-    x: rect[1].x - rect[2].x,
-    y: rect[1].y - rect[2].y,
-  }
-  const right = {
-    x: rect[1].x - rect[0].x,
-    y: rect[1].y - rect[0].y,
-  }
-  const rLen = vecLen(right)
-  const uLen = vecLen(up)
-  const axis = {
-    x: 0,
-    y: 0,
-  }
-  nRect.length = 4
-  nRect.fill(Object.assign({}, axis))
-  nRect = nRect.map(item => {
-    return Object.assign({}, item)
+// 移动矩形返回新坐标
+export const moveRect = (x: number, y: number, rect: InterfaceAxis[]): InterfaceAxis[] => {
+  let newRect = JSON.parse(JSON.stringify(rect))
+  newRect = newRect.map((item: InterfaceAxis) => {
+    item.x += x
+    item.y += y
+    return item
   })
-  nRect[0].x = rect[0].x + rLen * Math.sin(rad) * Math.sin(rad)
-  nRect[0].y = rect[0].y + rLen * Math.sin(rad) * Math.cos(rad)
-
-  nRect[1].x = rect[1].x + uLen * Math.sin(rad) * Math.cos(rad)
-  nRect[1].y = rect[1].y - uLen * Math.sin(rad) * Math.sin(rad)
-
-  nRect[2].x = rect[2].x - rLen * Math.sin(rad) * Math.sin(rad)
-  nRect[2].y = rect[2].y - rLen * Math.sin(rad) * Math.cos(rad)
-
-  nRect[3].x = rect[3].x - uLen * Math.sin(rad) * Math.cos(rad)
-  nRect[3].y = rect[3].y + uLen * Math.sin(rad) * Math.sin(rad)
-  return nRect
+  return newRect
 }
 
-// 计算一个矩形刚好包含另一个矩形需要的缩放倍数
-export const getCoverRectScale = (outer: InterfaceAxis[], inner: InterfaceAxis[]): number => {
-  let scale = 0
-  for (const i of inner) {
-    const num = getCoverPointScale(i, outer)
-    scale = Math.max(num, scale)
+// 返回两条直线的交点坐标
+export const lineIntersectionPoint = (
+  point1: InterfaceAxis,
+  point2: InterfaceAxis,
+  point3: InterfaceAxis,
+  point4: InterfaceAxis,
+): InterfaceAxis => {
+  const a = point2.y - point1.y
+  const b = point2.x * point1.y - point1.x * point2.y
+  const c = point2.x - point1.x
+  const d = point4.y - point3.y
+  const e = point4.x * point3.y - point3.x * point4.y
+  const f = point4.x - point3.x
+  const y = (a * e - b * d) / (a * f - c * d)
+  const x = (y * c - b) / a
+  return {
+    x,
+    y,
   }
-  return scale
 }
 
-// 计算矩形包含矩形外一点需要的放大倍数
-export const getCoverPointScale = (point: InterfaceAxis, rectPoints: InterfaceAxis[]): number => {
-  const pcv = getPCVectorProjOnUpAndRight(point, rectPoints)
-  // 计算矩形外一点到矩形中心向量在矩形边框向量上的投影距离
-  const uLen = vecLen(pcv.uproj)
-  const height = vecLen(pcv.up) / 2
-  const rLen = vecLen(pcv.rproj)
-  const width = vecLen(pcv.right) / 2
-
-  // 根据投影距离计算缩放倍数
-  if (uLen / height > rLen / width) {
-    return 1 + (uLen - height) / height
-  } else {
-    return 1 + (rLen - width) / width
+// 获取图片方向的限制点的坐标
+export const getPointChange = (
+  type: string,
+  rectImg: InterfaceAxis[],
+  rectCrop: InterfaceAxis[],
+  cropAxis: InterfaceAxis,
+  cropLayout: InterfaceLayoutStyle,
+  imgAxis: InterfaceImgAxis,
+): number => {
+  // 参照边
+  let reference = cropLayout.width
+  if (type === 'left') {
+    reference = cropLayout.height
   }
+  // 参照坐标
+  let referenceAxis = 0
+  if (type === 'top') {
+    referenceAxis = -cropAxis.y
+  }
+  if (type === 'left') {
+    referenceAxis = cropAxis.x
+  }
+  const distance =
+    reference *
+    Math.sin((imgAxis.rotate / 180) * Math.PI) *
+    Math.sin(((90 - imgAxis.rotate) / 180) * Math.PI)
+  // 点的坐标
+  let pointAxis = 0
+  if (type === 'top') {
+    pointAxis = referenceAxis + distance
+  }
+
+  if (type === 'left') {
+    pointAxis = referenceAxis - distance
+  }
+
+  // 变化量
+  let index = 0
+  let change = 0
+  if (type === 'top') {
+    index = 0
+    change = rectImg[index].y - pointAxis
+  }
+  if (type === 'left') {
+    index = 3
+    change = rectImg[index].x - pointAxis
+    if (change < 0) {
+      change = 0
+    }
+  }
+  // 平移后的矩形坐标
+  const curRectImg = rectImg.map(item => {
+    const obj = {
+      x: item.x,
+      y: item.y,
+    }
+    if (type === 'top') {
+      obj.y = obj.y - change
+    }
+    if (type === 'left') {
+      obj.x = obj.x - change
+    }
+    return obj
+  })
+  // 反向推出不旋转的原始坐标
+  const originalRectImg = getRotateAxis(curRectImg, getPointsCenter(curRectImg), imgAxis.rotate)
+  let res = 0
+  if (type === 'top') {
+    res = -originalRectImg[index].y
+  }
+  if (type === 'left') {
+    res = originalRectImg[index].x
+  }
+  return res
+}
+
+// 返回当前每个方向极端的索引->左， 上，右， 下
+export const getIndexArr = (rotate?: number): number[] => {
+  // 矩形的存储坐标为上左， 上右，下右， 下左
+  const arr = [3, 0, 1, 2]
+  return arr
 }
 
 // 判断图片是否完全包含截图框
@@ -535,6 +588,20 @@ export const getRotateAxis = (
     item.y = (y - points.y) * Math.cos(angel) + (x - points.x) * Math.sin(angel) + points.y
     return item
   })
+}
+
+// 获取坐标系绕一点绕另一点旋转后的坐标
+export const getRotatePointAxis = (
+  original: InterfaceAxis,
+  points: InterfaceAxis,
+  rotate: number,
+): InterfaceAxis => {
+  const angel = (rotate * Math.PI) / 180
+  const { x, y } = original
+  return {
+    x: (x - points.x) * Math.cos(angel) - (y - points.y) * Math.sin(angel) + points.x,
+    y: (y - points.y) * Math.cos(angel) + (x - points.x) * Math.sin(angel) + points.y,
+  }
 }
 
 /**

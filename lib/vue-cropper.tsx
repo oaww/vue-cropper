@@ -785,6 +785,18 @@ export default class VueCropper extends Vue {
         onmouseover={this.mouseInCropper}
         onmouseout={this.mouseOutCropper}
       >
+        <section class="cropper-tips">
+          <p>
+            截图框 x: {this.cropAxis.x} y: {this.cropAxis.y}
+          </p>
+          <p>
+            截图框 w: {this.cropLayout.width} y: {this.cropLayout.height}
+          </p>
+          <p>
+            图片坐标 x: {this.imgAxis.x} y: {this.imgAxis.y}
+          </p>
+          <p>旋转角度 {this.imgAxis.rotate} </p>
+        </section>
         {this.imgs ? (
           <section class="cropper-box cropper-fade-in">
             {/* 图片展示框 */}
