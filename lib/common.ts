@@ -285,7 +285,7 @@ export const boundaryCalculation = (
   const rotate = -imgAxis.rotate
   // 此时应该判断 如果当前操作是属于放大缩小， 选择才采用当前判断 获取图片的四个点的坐标轴。 这时代表采取新的检测方式去判断
   // 移动距离的计算可以先获得点到矩形中心的向量，然后计算该向量在矩形边框上的投影向量，最后可以用投影向量的长度减去边框长度的一半得到
-  let rectImg = getRectPoints(imgAxis.x, imgAxis.y, imgWidth, imgHeight, rotate)
+  const rectImg = getRectPoints(imgAxis.x, imgAxis.y, imgWidth, imgHeight, rotate)
   const rectCrop = getRectPoints(cropAxis.x, cropAxis.y, cropLayout.width, cropLayout.height)
   const isCover = isWholeCover(rectImg, rectCrop)
   if (!isCover) {
@@ -303,29 +303,14 @@ export const boundaryCalculation = (
     const moveX = cropAxis.x - intersectionPoint.x
     const moveY = 0
     // 操作矩形移动
-    rectImg = moveRect(moveX, moveY, rectImg)
+    // rectImg = moveRect(moveX, moveY, rectImg)
 
-    console.log(moveX, moveY, rectImg)
+    console.log(moveX, moveY)
 
     boundary.top = getPointChange('top', rectImg, rectCrop, cropAxis, cropLayout, imgAxis)
 
     boundary.left = getPointChange('left', rectImg, rectCrop, cropAxis, cropLayout, imgAxis)
 
-    // 算出截图框应该距离顶部的值
-    // const topL = cropLayout.width * Math.sin(imgAxis.rotate / 180 * Math.PI) * Math.sin((90 - imgAxis.rotate) / 180 * Math.PI)
-    // const topC = -cropAxis.y + topL
-    // console.log('最上面的坐标应该距离截图框的差值', topL, '最上面显示的坐标为', topC)
-    // const changeY = rectImg[0].y - topC
-    // const curRectImg = rectImg.map(item => {
-    //   return {
-    //     x: item.x,
-    //     y: item.y - changeY
-    //   }
-    // })
-    // console.log('新的矩形坐标', curRectImg)
-    // const originalRectImg = getRotateAxis(curRectImg, getPointsCenter(curRectImg), imgAxis.rotate)
-    // console.log('反向选择回去坐标', originalRectImg)
-    // boundary.top = -originalRectImg[0].y
     console.log(boundary)
   }
   return boundary
@@ -409,9 +394,6 @@ export const getPointChange = (
   if (type === 'left') {
     index = 3
     change = rectImg[index].x - pointAxis
-    if (change < 0) {
-      change = 0
-    }
   }
   // 平移后的矩形坐标
   const curRectImg = rectImg.map(item => {
