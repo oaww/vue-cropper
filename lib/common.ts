@@ -247,6 +247,7 @@ export const boundaryCalculation = (
 ): InterfaceBoundary => {
   // 返回各个方向允许的值，以及图片的最小缩放比例
   // 先不管有旋转的情况，默认为没有旋转的返回
+  const start = performance.now()
 
   const boundary: InterfaceBoundary = {
     left: 0,
@@ -313,6 +314,9 @@ export const boundaryCalculation = (
 
     console.log(boundary)
   }
+
+  const end = performance.now()
+  console.log(`校验耗时 ${(end - start).toFixed(2)}ms`)
   return boundary
 }
 
