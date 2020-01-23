@@ -292,25 +292,45 @@ export const boundaryCalculation = (
   if (!isCover) {
     console.log('超出边界， 需要生成新的矩形坐标')
     // 获取目前矩形的坐标
-    console.log(rectImg, rectCrop)
+    // console.log(rectImg, rectCrop)
 
-    const intersectionPoint = lineIntersectionPoint(
+    // 图片如果超过左边应该移动到的点是 ->图片左边和截图框上边相交的点, 以及是否小于左边夹角最小容纳区域
+    const intersectionPointLeft = lineIntersectionPoint(
       rectImg[0],
       rectImg[3],
       rectCrop[0],
       rectCrop[1],
     )
-    console.log('交点', intersectionPoint)
-    const moveX = cropAxis.x - intersectionPoint.x
-    const moveY = 0
+    console.log(intersectionPointLeft, '左边交点坐标')
+    const moveLeft = intersectionPointLeft.x - cropAxis.x
+
+    // 图片如果超过顶部应该移动到的点是 -> 图片上方和截图框右边相交的点，以及是否小于左边夹角最小容纳区域
+    const intersectionPointTop = lineIntersectionPoint(
+      rectImg[0],
+      rectImg[1],
+      rectCrop[1],
+      rectCrop[2],
+    )
+    console.log(intersectionPointTop, '顶部交点坐标')
+    const moveTop = intersectionPointTop.y + cropAxis.y
+    // console.log(moveTop)
+
     // 操作矩形移动
     // rectImg = moveRect(moveX, moveY, rectImg)
 
-    console.log(moveX, moveY)
+    // console.log(moveX, moveY)
 
-    boundary.top = getPointChange('top', rectImg, rectCrop, cropAxis, cropLayout, imgAxis)
+    boundary.top = getPointChange('top', rectImg, rectCrop, cropAxis, cropLayout, imgAxis, moveTop)
 
-    boundary.left = getPointChange('left', rectImg, rectCrop, cropAxis, cropLayout, imgAxis)
+    boundary.left = getPointChange(
+      'left',
+      rectImg,
+      rectCrop,
+      cropAxis,
+      cropLayout,
+      imgAxis,
+      moveLeft,
+    )
 
     console.log(boundary)
   }
@@ -360,6 +380,7 @@ export const getPointChange = (
   cropAxis: InterfaceAxis,
   cropLayout: InterfaceLayoutStyle,
   imgAxis: InterfaceImgAxis,
+  moveChange = 0,
 ): number => {
   // 参照边
   let reference = cropLayout.width
@@ -372,6 +393,7 @@ export const getPointChange = (
     referenceAxis = -cropAxis.y
   }
   if (type === 'left') {
+    // 这个表示左边的距离
     referenceAxis = cropAxis.x
   }
   const distance =
@@ -406,9 +428,16 @@ export const getPointChange = (
       y: item.y,
     }
     if (type === 'top') {
+      // console.log(change, moveChange, '---')
+      if (change > moveChange) {
+        change = moveChange
+      }
       obj.y = obj.y - change
     }
     if (type === 'left') {
+      if (change < moveChange) {
+        change = moveChange
+      }
       obj.x = obj.x - change
     }
     return obj
