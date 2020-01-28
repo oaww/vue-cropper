@@ -99,7 +99,7 @@ export default class Home extends Vue {
       width: '900px',
       height: '500px',
     },
-    rotate: 10,
+    rotate: 30,
     centerBox: true
   }
 

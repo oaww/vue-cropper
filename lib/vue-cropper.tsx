@@ -532,6 +532,7 @@ export default class VueCropper extends Vue {
 
     if (crossing.landscape === 'left') {
       setAnimation(this.imgAxis.x, crossing.boundary.left, BOUNDARY_DURATION, value => {
+        // console.log('set left', value)
         this.setImgAxis({
           x: value,
           y: this.imgAxis.y,
@@ -550,6 +551,7 @@ export default class VueCropper extends Vue {
 
     if (crossing.portrait === 'top') {
       setAnimation(this.imgAxis.y, crossing.boundary.top, BOUNDARY_DURATION, value => {
+        // console.log('set top', value)
         this.setImgAxis({
           x: this.imgAxis.x,
           y: value,

@@ -302,7 +302,18 @@ export const boundaryCalculation = (
       rectCrop[1],
     )
     console.log(intersectionPointLeft, '左边交点坐标')
-    const moveLeft = intersectionPointLeft.x - cropAxis.x
+    const moveLeft = intersectionPointLeft.x - rectCrop[0].x
+    boundary.left = getPointChange(
+      'left',
+      rectImg,
+      rectCrop,
+      cropAxis,
+      cropLayout,
+      imgAxis,
+      imgLayout,
+      moveLeft,
+    )
+    console.log('left边界', boundary.left)
 
     // 图片如果超过顶部应该移动到的点是 -> 图片上方和截图框右边相交的点，以及是否小于左边夹角最小容纳区域
     const intersectionPointTop = lineIntersectionPoint(
@@ -313,24 +324,38 @@ export const boundaryCalculation = (
     )
     console.log(intersectionPointTop, '顶部交点坐标')
     const moveTop = intersectionPointTop.y + cropAxis.y
-    // console.log(moveTop)
-
-    // 操作矩形移动
-    // rectImg = moveRect(moveX, moveY, rectImg)
-
-    // console.log(moveX, moveY)
-
-    boundary.top = getPointChange('top', rectImg, rectCrop, cropAxis, cropLayout, imgAxis, moveTop)
-
-    boundary.left = getPointChange(
-      'left',
+    boundary.top = getPointChange(
+      'top',
       rectImg,
       rectCrop,
       cropAxis,
       cropLayout,
       imgAxis,
-      moveLeft,
+      imgLayout,
+      moveTop,
     )
+    console.log('top边界', boundary.top)
+
+    // 图片右边的限制
+    const intersectionPointRight = lineIntersectionPoint(
+      rectImg[1],
+      rectImg[2],
+      rectCrop[3],
+      rectCrop[2],
+    )
+    console.log(intersectionPointRight, '右边交点坐标')
+    const moveRight = intersectionPointLeft.x - rectCrop[2].x
+    boundary.right = getPointChange(
+      'right',
+      rectImg,
+      rectCrop,
+      cropAxis,
+      cropLayout,
+      imgAxis,
+      imgLayout,
+      moveRight,
+    )
+    console.log('right边界', boundary.right)
 
     console.log(boundary)
   }
@@ -358,6 +383,7 @@ export const lineIntersectionPoint = (
   point3: InterfaceAxis,
   point4: InterfaceAxis,
 ): InterfaceAxis => {
+  // console.log(point1, point2, point3, point4)
   const a = point2.y - point1.y
   const b = point2.x * point1.y - point1.x * point2.y
   const c = point2.x - point1.x
@@ -380,11 +406,12 @@ export const getPointChange = (
   cropAxis: InterfaceAxis,
   cropLayout: InterfaceLayoutStyle,
   imgAxis: InterfaceImgAxis,
+  imgLayout: InterfaceLayoutStyle,
   moveChange = 0,
 ): number => {
   // 参照边
   let reference = cropLayout.width
-  if (type === 'left') {
+  if (type === 'left' || 'right') {
     reference = cropLayout.height
   }
   // 参照坐标
@@ -395,6 +422,11 @@ export const getPointChange = (
   if (type === 'left') {
     // 这个表示左边的距离
     referenceAxis = cropAxis.x
+  }
+
+  if (type === 'right') {
+    // 这个表示右边边的距离， 截图框右边的坐标
+    referenceAxis = rectCrop[1].x - (rectImg[1].x - rectImg[0].x)
   }
   const distance =
     reference *
@@ -410,6 +442,10 @@ export const getPointChange = (
     pointAxis = referenceAxis - distance
   }
 
+  if (type === 'right') {
+    pointAxis = referenceAxis + distance
+  }
+
   // 变化量
   let index = 0
   let change = 0
@@ -419,6 +455,10 @@ export const getPointChange = (
   }
   if (type === 'left') {
     index = 3
+    change = rectImg[index].x - pointAxis
+  }
+  if (type === 'right') {
+    index = 1
     change = rectImg[index].x - pointAxis
   }
   // 平移后的矩形坐标
@@ -440,6 +480,15 @@ export const getPointChange = (
       }
       obj.x = obj.x - change
     }
+
+    if (type === 'right') {
+      console.log(`ddiidid${moveChange}， ${change}`)
+      // if (change < moveChange) {
+      //   console.log(`daaaa${moveChange}， ${change}`)
+      //   change = moveChange
+      // }
+      obj.x = obj.x - change
+    }
     return obj
   })
   // 反向推出不旋转的原始坐标
@@ -448,7 +497,7 @@ export const getPointChange = (
   if (type === 'top') {
     res = -originalRectImg[index].y
   }
-  if (type === 'left') {
+  if (type === 'left' || type === 'right') {
     res = originalRectImg[index].x
   }
   return res
