@@ -25,12 +25,12 @@ if(process.browser) {
 ```
 
 ``` html
-<vueCropper
+<vue-cropper
   ref="cropper"
   :img="option.img"
   :outputSize="option.size"
   :outputType="option.outputType"
-></vueCropper>
+></vue-cropper>
 ```
 
 
